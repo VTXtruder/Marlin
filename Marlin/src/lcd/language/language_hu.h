@@ -83,23 +83,23 @@ namespace LanguageNarrow_hu {
   LSTR MSG_TRAMMING_WIZARD                = _UxGT("Elektromos varázsló");
   LSTR MSG_SELECT_ORIGIN                  = _UxGT("Eredeti választása");
   LSTR MSG_LAST_VALUE_SP                  = _UxGT("Utolsó érték ");
+  #if HAS_PREHEAT
+    LSTR MSG_PREHEAT_1                    = _UxGT("Fütés ") PREHEAT_1_LABEL;
+    LSTR MSG_PREHEAT_1_H                  = _UxGT("Fütés ") PREHEAT_1_LABEL " ~";
+    LSTR MSG_PREHEAT_1_END                = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Fej");
+    LSTR MSG_PREHEAT_1_END_E              = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Fej ~");
+    LSTR MSG_PREHEAT_1_ALL                = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Mind");
+    LSTR MSG_PREHEAT_1_BEDONLY            = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Ágy");
+    LSTR MSG_PREHEAT_1_SETTINGS           = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Beáll");
 
-  LSTR MSG_PREHEAT_1                      = _UxGT("Fütés ") PREHEAT_1_LABEL;
-  LSTR MSG_PREHEAT_1_H                    = _UxGT("Fütés ") PREHEAT_1_LABEL " ~";
-  LSTR MSG_PREHEAT_1_END                  = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Fej");
-  LSTR MSG_PREHEAT_1_END_E                = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Fej ~");
-  LSTR MSG_PREHEAT_1_ALL                  = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Mind");
-  LSTR MSG_PREHEAT_1_BEDONLY              = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Ágy");
-  LSTR MSG_PREHEAT_1_SETTINGS             = _UxGT("Fütés ") PREHEAT_1_LABEL _UxGT(" Beáll");
-
-  LSTR MSG_PREHEAT_M                      = _UxGT("Fütés $");
-  LSTR MSG_PREHEAT_M_H                    = _UxGT("Fütés $ ~");
-  LSTR MSG_PREHEAT_M_END                  = _UxGT("Fütés $ Fej");
-  LSTR MSG_PREHEAT_M_END_E                = _UxGT("Fütés $ Fej ~");
-  LSTR MSG_PREHEAT_M_ALL                  = _UxGT("Fütés $ Mind");
-  LSTR MSG_PREHEAT_M_BEDONLY              = _UxGT("Fütés $ Ágy");
-  LSTR MSG_PREHEAT_M_SETTINGS             = _UxGT("Fütés $ Beáll");
-
+    LSTR MSG_PREHEAT_M                    = _UxGT("Fütés $");
+    LSTR MSG_PREHEAT_M_H                  = _UxGT("Fütés $ ~");
+    LSTR MSG_PREHEAT_M_END                = _UxGT("Fütés $ Fej");
+    LSTR MSG_PREHEAT_M_END_E              = _UxGT("Fütés $ Fej ~");
+    LSTR MSG_PREHEAT_M_ALL                = _UxGT("Fütés $ Mind");
+    LSTR MSG_PREHEAT_M_BEDONLY            = _UxGT("Fütés $ Ágy");
+    LSTR MSG_PREHEAT_M_SETTINGS           = _UxGT("Fütés $ Beáll");
+  #endif
   LSTR MSG_PREHEAT_CUSTOM                 = _UxGT("Egyedi elömelegítés");
   LSTR MSG_COOLDOWN                       = _UxGT("Visszahütés");
 
@@ -272,7 +272,7 @@ namespace LanguageNarrow_hu {
   LSTR MSG_MOVE_05IN                      = _UxGT("Mozgás 12.7mm");
   LSTR MSG_MOVE_1IN                       = _UxGT("Mozgáá 25.4mm");
   LSTR MSG_SPEED                          = _UxGT("Sebesség");
-  LSTR MSG_MESH_Z_OFFSET                  = _UxGT("Z ágy");
+  LSTR MSG_BED_Z                          = _UxGT("Z ágy");
   LSTR MSG_NOZZLE                         = _UxGT("Fej");
   LSTR MSG_NOZZLE_N                       = _UxGT("Fej ~");
   LSTR MSG_NOZZLE_PARKED                  = _UxGT("Fej parkolva");
@@ -306,7 +306,7 @@ namespace LanguageNarrow_hu {
   LSTR MSG_PID_AUTOTUNE_E                 = _UxGT("PID hangolás *");
   LSTR MSG_PID_CYCLE                      = _UxGT("PID ciklus");
   LSTR MSG_PID_AUTOTUNE_DONE              = _UxGT("PID hangolás kész");
-  LSTR MSG_PID_BAD_HEATER_ID              = _UxGT("Hangolási hiba! Rossz adagoló.");
+  LSTR MSG_PID_BAD_EXTRUDER_NUM           = _UxGT("Hangolási hiba! Rossz adagoló.");
   LSTR MSG_PID_TEMP_TOO_HIGH              = _UxGT("Hangolási hiba! Magas hömérséklet.");
   LSTR MSG_PID_TIMEOUT                    = _UxGT("Hangolási hiba! Idötúllépés.");
   LSTR MSG_SELECT_E                       = _UxGT("Kiválaszt *");
@@ -368,7 +368,7 @@ namespace LanguageNarrow_hu {
   LSTR MSG_SETTINGS_STORED                = _UxGT("Beállítások mentve");
   LSTR MSG_MEDIA_UPDATE                   = _UxGT("Tároló frissítés");
   LSTR MSG_RESET_PRINTER                  = _UxGT("Nyomtató újraindítása");
-  LSTR MSG_REFRESH                        = LCD_STR_REFRESH _UxGT("Frissítés");
+  LSTR MSG_REFRESH                        = LCD_STR_REFRESH  _UxGT("Frissítés");
   LSTR MSG_INFO_SCREEN                    = _UxGT("<Infó képernyö>");
   LSTR MSG_PREPARE                        = _UxGT("Vezérlés");
   LSTR MSG_TUNE                           = _UxGT("Hangolás");
@@ -479,10 +479,13 @@ namespace LanguageNarrow_hu {
   LSTR MSG_BABYSTEP_N                     = _UxGT("Mikrolépés @");
   LSTR MSG_BABYSTEP_TOTAL                 = _UxGT("Teljes");
   LSTR MSG_ENDSTOP_ABORT                  = _UxGT("Végállás megszakítva!");
-  LSTR MSG_ERR_HEATING_FAILED             = _UxGT("Fütés hiba!");
+  LSTR MSG_HEATING_FAILED_LCD             = _UxGT("Fütés hiba!");
   LSTR MSG_ERR_REDUNDANT_TEMP             = _UxGT("Hiba: SZÜKSÉGTELEN HÖFOK");
-  LSTR MSG_ERR_THERMAL_RUNAWAY            = _UxGT("FÜTÉS KIMARADÁS");
-  LSTR MSG_ERR_COOLING_FAILED             = _UxGT("Hütés sikertelen");
+  LSTR MSG_THERMAL_RUNAWAY                = _UxGT("FÜTÉS KIMARADÁS");
+  LSTR MSG_THERMAL_RUNAWAY_BED            = _UxGT("ÁGY FÜTÉS KIMARADÁS");
+  LSTR MSG_THERMAL_RUNAWAY_CHAMBER        = _UxGT("KAMRA FÜTÉS KIMARADÁS");
+  LSTR MSG_THERMAL_RUNAWAY_COOLER         = _UxGT("Hütés kimaradás");
+  LSTR MSG_COOLING_FAILED                 = _UxGT("Hütés sikertelen");
   LSTR MSG_ERR_MAXTEMP                    = _UxGT("Hiba: MAX höfok");
   LSTR MSG_ERR_MINTEMP                    = _UxGT("Hiba: MIN höfok");
   LSTR MSG_HALTED                         = _UxGT("A NYOMTATÓ LEÁLLT");
@@ -528,11 +531,19 @@ namespace LanguageNarrow_hu {
   LSTR MSG_CASE_LIGHT_BRIGHTNESS          = _UxGT("Fényerösség");
   LSTR MSG_KILL_EXPECTED_PRINTER          = _UxGT("HELYTELEN NYOMTATÓ");
 
-  LSTR MSG_INFO_PRINT_COUNT               = _UxGT("Nyomtatások");
-  LSTR MSG_INFO_COMPLETED_PRINTS          = _UxGT("Befejezett");
-  LSTR MSG_INFO_PRINT_TIME                = _UxGT("Összes");
-  LSTR MSG_INFO_PRINT_LONGEST             = _UxGT("Leghosszabb");
-  LSTR MSG_INFO_PRINT_FILAMENT            = _UxGT("Kiadott");
+  #if LCD_WIDTH >= 20 || HAS_DWIN_E3V2
+    LSTR MSG_INFO_PRINT_COUNT             = _UxGT("Nyomtatás számláló");
+    LSTR MSG_INFO_COMPLETED_PRINTS        = _UxGT("Befejezett");
+    LSTR MSG_INFO_PRINT_TIME              = _UxGT("Összes nyomtatási idö");
+    LSTR MSG_INFO_PRINT_LONGEST           = _UxGT("Leghosszabb munkaidö");
+    LSTR MSG_INFO_PRINT_FILAMENT          = _UxGT("Összes anyag");
+  #else
+    LSTR MSG_INFO_PRINT_COUNT             = _UxGT("Nyomtatások");
+    LSTR MSG_INFO_COMPLETED_PRINTS        = _UxGT("Befejezett");
+    LSTR MSG_INFO_PRINT_TIME              = _UxGT("Összes");
+    LSTR MSG_INFO_PRINT_LONGEST           = _UxGT("Leghosszabb");
+    LSTR MSG_INFO_PRINT_FILAMENT          = _UxGT("Kiadott");
+  #endif
 
   LSTR MSG_INFO_MIN_TEMP                  = _UxGT("Min höfok");
   LSTR MSG_INFO_MAX_TEMP                  = _UxGT("Max höfok");
@@ -617,18 +628,31 @@ namespace LanguageNarrow_hu {
   //
   // Filament Change screens show up to 2 lines on a 3-line display
   //
-  LSTR MSG_ADVANCED_PAUSE_WAITING         = _UxGT(MSG_1_LINE("Katt a folytatáshoz"));
-  LSTR MSG_PAUSE_PRINT_PARKING            = _UxGT(MSG_1_LINE("Parkolás..."));
-  LSTR MSG_FILAMENT_CHANGE_INIT           = _UxGT(MSG_1_LINE("Kérlek várj..."));
-  LSTR MSG_FILAMENT_CHANGE_INSERT         = _UxGT(MSG_1_LINE("Behelyez majd katt"));
-  LSTR MSG_FILAMENT_CHANGE_HEAT           = _UxGT(MSG_1_LINE("Katt a fütéshez"));
-  LSTR MSG_FILAMENT_CHANGE_HEATING        = _UxGT(MSG_1_LINE("Fütés..."));
-  LSTR MSG_FILAMENT_CHANGE_UNLOAD         = _UxGT(MSG_1_LINE("Kiadás..."));
-  LSTR MSG_FILAMENT_CHANGE_LOAD           = _UxGT(MSG_1_LINE("Betöltés..."));
-  LSTR MSG_FILAMENT_CHANGE_PURGE          = _UxGT(MSG_1_LINE("Tisztítás..."));
-  LSTR MSG_FILAMENT_CHANGE_CONT_PURGE     = _UxGT(MSG_1_LINE("Katt ha kész"));
-  LSTR MSG_FILAMENT_CHANGE_RESUME         = _UxGT(MSG_1_LINE("Folytatás..."));
-
+  #if LCD_HEIGHT >= 4
+    LSTR MSG_ADVANCED_PAUSE_WAITING       = _UxGT(MSG_2_LINE("Nyomj gombot", "nyomtatás folytatáshoz"));
+    LSTR MSG_PAUSE_PRINT_PARKING          = _UxGT(MSG_1_LINE("Parkolás..."));
+    LSTR MSG_FILAMENT_CHANGE_INIT         = _UxGT(MSG_3_LINE("Várj míg", "szálcsere", "indítás"));
+    LSTR MSG_FILAMENT_CHANGE_INSERT       = _UxGT(MSG_3_LINE("Szál behelyezés", "majd nyomj gombot", "a folytatáshoz"));
+    LSTR MSG_FILAMENT_CHANGE_HEAT         = _UxGT(MSG_2_LINE("Nyomj gombot", "a fej fütéséhez"));
+    LSTR MSG_FILAMENT_CHANGE_HEATING      = _UxGT(MSG_2_LINE("Fej fütése", "Kérlek várj..."));
+    LSTR MSG_FILAMENT_CHANGE_UNLOAD       = _UxGT(MSG_2_LINE("Várj a", "szál kiadására"));
+    LSTR MSG_FILAMENT_CHANGE_LOAD         = _UxGT(MSG_2_LINE("Várj a", "szál betöltésére"));
+    LSTR MSG_FILAMENT_CHANGE_PURGE        = _UxGT(MSG_2_LINE("Várj a", "szál tisztításra"));
+    LSTR MSG_FILAMENT_CHANGE_CONT_PURGE   = _UxGT(MSG_2_LINE("Kattints a készre", "szál tiszta"));
+    LSTR MSG_FILAMENT_CHANGE_RESUME       = _UxGT(MSG_2_LINE("Várj a nyomtatóra", "majd folytat..."));
+  #else
+    LSTR MSG_ADVANCED_PAUSE_WAITING       = _UxGT(MSG_1_LINE("Katt a folytatáshoz"));
+    LSTR MSG_PAUSE_PRINT_PARKING          = _UxGT(MSG_1_LINE("Parkolás..."));
+    LSTR MSG_FILAMENT_CHANGE_INIT         = _UxGT(MSG_1_LINE("Kérlek várj..."));
+    LSTR MSG_FILAMENT_CHANGE_INSERT       = _UxGT(MSG_1_LINE("Behelyez majd katt"));
+    LSTR MSG_FILAMENT_CHANGE_HEAT         = _UxGT(MSG_1_LINE("Katt a fütéshez"));
+    LSTR MSG_FILAMENT_CHANGE_HEATING      = _UxGT(MSG_1_LINE("Fütés..."));
+    LSTR MSG_FILAMENT_CHANGE_UNLOAD       = _UxGT(MSG_1_LINE("Kiadás..."));
+    LSTR MSG_FILAMENT_CHANGE_LOAD         = _UxGT(MSG_1_LINE("Betöltés..."));
+    LSTR MSG_FILAMENT_CHANGE_PURGE        = _UxGT(MSG_1_LINE("Tisztítás..."));
+    LSTR MSG_FILAMENT_CHANGE_CONT_PURGE   = _UxGT(MSG_1_LINE("Katt ha kész"));
+    LSTR MSG_FILAMENT_CHANGE_RESUME       = _UxGT(MSG_1_LINE("Folytatás..."));
+  #endif
   LSTR MSG_TMC_DRIVERS                    = _UxGT("TMC meghajtók");
   LSTR MSG_TMC_CURRENT                    = _UxGT("Meghajtó áram");
   LSTR MSG_TMC_HYBRID_THRS                = _UxGT("Hibrid küszöbérték");
@@ -643,8 +667,11 @@ namespace LanguageNarrow_hu {
 
   LSTR MSG_LEVEL_X_AXIS                   = _UxGT("X tengely szint");
   LSTR MSG_AUTO_CALIBRATE                 = _UxGT("Önkalibrálás");
-  LSTR MSG_FTDI_HEATER_TIMEOUT            = _UxGT("Tétlenségi idökorlát, a hömérséklet csökkent. Nyomd meg az OK gombot az ismételt felfütéshez, és újra a folytatáshoz.");
-  LSTR MSG_HEATER_TIMEOUT                 = _UxGT("Fütés idökorlátja");
+  #if ENABLED(TOUCH_UI_FTDI_EVE)
+    LSTR MSG_HEATER_TIMEOUT               = _UxGT("Tétlenségi idökorlát, a hömérséklet csökkent. Nyomd meg az OK gombot az ismételt felfütéshez, és újra a folytatáshoz.");
+  #else
+    LSTR MSG_HEATER_TIMEOUT               = _UxGT("Fütés idökorlátja");
+  #endif
   LSTR MSG_REHEAT                         = _UxGT("Újrafüt");
   LSTR MSG_REHEATING                      = _UxGT("Újrafütés...");
 
@@ -669,36 +696,4 @@ namespace LanguageNarrow_hu {
   LSTR MSG_SHORT_DAY                      = _UxGT("n"); // Csak egy karakter
   LSTR MSG_SHORT_HOUR                     = _UxGT("ó"); // Csak egy karakter
   LSTR MSG_SHORT_MINUTE                   = _UxGT("p"); // Csak egy karakter
-}
-
-namespace LanguageWide_hu {
-  using namespace LanguageNarrow_hu;
-  #if LCD_WIDTH >= 20 || HAS_DWIN_E3V2
-    LSTR MSG_INFO_PRINT_COUNT             = _UxGT("Nyomtatás számláló");
-    LSTR MSG_INFO_COMPLETED_PRINTS        = _UxGT("Befejezett");
-    LSTR MSG_INFO_PRINT_TIME              = _UxGT("Összes nyomtatási idö");
-    LSTR MSG_INFO_PRINT_LONGEST           = _UxGT("Leghosszabb munkaidö");
-    LSTR MSG_INFO_PRINT_FILAMENT          = _UxGT("Összes anyag");
-  #endif
-}
-
-namespace LanguageTall_hu {
-  using namespace LanguageWide_hu;
-  #if LCD_HEIGHT >= 4
-    // Filament Change screens show up to 3 lines on a 4-line display
-    LSTR MSG_ADVANCED_PAUSE_WAITING       = _UxGT(MSG_2_LINE("Nyomj gombot", "nyomtatás folytatáshoz"));
-    LSTR MSG_FILAMENT_CHANGE_INIT         = _UxGT(MSG_3_LINE("Várj míg", "szálcsere", "indítás"));
-    LSTR MSG_FILAMENT_CHANGE_INSERT       = _UxGT(MSG_3_LINE("Szál behelyezés", "majd nyomj gombot", "a folytatáshoz"));
-    LSTR MSG_FILAMENT_CHANGE_HEAT         = _UxGT(MSG_2_LINE("Nyomj gombot", "a fej fütéséhez"));
-    LSTR MSG_FILAMENT_CHANGE_HEATING      = _UxGT(MSG_2_LINE("Fej fütése", "Kérlek várj..."));
-    LSTR MSG_FILAMENT_CHANGE_UNLOAD       = _UxGT(MSG_2_LINE("Várj a", "szál kiadására"));
-    LSTR MSG_FILAMENT_CHANGE_LOAD         = _UxGT(MSG_2_LINE("Várj a", "szál betöltésére"));
-    LSTR MSG_FILAMENT_CHANGE_PURGE        = _UxGT(MSG_2_LINE("Várj a", "szál tisztításra"));
-    LSTR MSG_FILAMENT_CHANGE_CONT_PURGE   = _UxGT(MSG_2_LINE("Kattints a készre", "szál tiszta"));
-    LSTR MSG_FILAMENT_CHANGE_RESUME       = _UxGT(MSG_2_LINE("Várj a nyomtatóra", "majd folytat..."));
-  #endif
-}
-
-namespace Language_hu {
-  using namespace LanguageTall_hu;
 }

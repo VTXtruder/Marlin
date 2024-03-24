@@ -84,7 +84,7 @@ void NextionTFT::idleLoop() {
   UpdateOnChange();
 }
 
-void NextionTFT::printerKilled(FSTR_P const error, FSTR_P const component) {
+void NextionTFT::PrinterKilled(FSTR_P const error, FSTR_P const component) {
   SEND_TXT_END("page error");
   SEND_TXT_F("t3", F("Error"));
   SEND_TXT_F("t4", component);
@@ -99,20 +99,20 @@ void NextionTFT::PrintFinished() {
 void NextionTFT::confirmationRequest(const char * const msg) {
   SEND_VALasTXT("tmppage.M117", msg);
   #if NEXDEBUG(N_MARLIN)
-    DEBUG_ECHOLNPGM("confirmationRequest() ", msg, " printer_state:", printer_state);
+    DEBUG_ECHOLNPGM("ConfirmationRequest() ", msg, " printer_state:", printer_state);
   #endif
 }
 
 void NextionTFT::statusChange(const char * const msg) {
   #if NEXDEBUG(N_MARLIN)
-    DEBUG_ECHOLNPGM("statusChange() ", msg, "\nprinter_state:", printer_state);
+    DEBUG_ECHOLNPGM("StatusChange() ", msg, "\nprinter_state:", printer_state);
   #endif
   SEND_VALasTXT("tmppage.M117", msg);
 }
 
-void NextionTFT::tftSend(FSTR_P const fstr/*=nullptr*/) { // A helper to print PROGMEM string to the panel
+void NextionTFT::SendtoTFT(FSTR_P const fstr/*=nullptr*/) { // A helper to print PROGMEM string to the panel
   #if NEXDEBUG(N_SOME)
-    DEBUG_ECHO(fstr);
+    DEBUG_ECHOF(fstr);
   #endif
   PGM_P str = FTOP(fstr);
   while (const char c = pgm_read_byte(str++)) LCD_SERIAL.write(c);
@@ -139,10 +139,10 @@ bool NextionTFT::readTFTCommand() {
     #if NEXDEBUG(N_SOME)
       uint8_t req = atoi(&nextion_command[1]);
       if (req > 7 && req != 20)
-        DEBUG_ECHOLNPGM(  "> ", AS_CHAR(nextion_command[0]),
-                         "\n> ", AS_CHAR(nextion_command[1]),
-                         "\n> ", AS_CHAR(nextion_command[2]),
-                         "\n> ", AS_CHAR(nextion_command[3]),
+        DEBUG_ECHOLNPGM(  "> ", C(nextion_command[0]),
+                         "\n> ", C(nextion_command[1]),
+                         "\n> ", C(nextion_command[2]),
+                         "\n> ", C(nextion_command[3]),
                          "\nprinter_state:", printer_state);
     #endif
   }
@@ -152,7 +152,7 @@ bool NextionTFT::readTFTCommand() {
 void NextionTFT::sendFileList(int8_t startindex) {
   // respond to panel request for 7 files starting at index
   #if NEXDEBUG(N_INFO)
-    DEBUG_ECHOLNPGM("## sendFileList ## ", startindex);
+    DEBUG_ECHOLNPGM("## SendFileList ## ", startindex);
   #endif
   filenavigator.getFiles(startindex);
 }
@@ -431,24 +431,24 @@ void NextionTFT::panelInfo(uint8_t req) {
 
   case 36: // Endstop Info
     #if X_HOME_TO_MIN
-      SEND_VALasTXT("x1", READ(X_MIN_PIN) == X_MIN_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("x1", READ(X_MIN_PIN) != X_MIN_ENDSTOP_INVERTING ? "triggered" : "open");
     #elif X_HOME_TO_MAX
-      SEND_VALasTXT("x2", READ(X_MAX_PIN) == X_MAX_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("x2", READ(X_MAX_PIN) != X_MAX_ENDSTOP_INVERTING ? "triggered" : "open");
     #endif
     #if Y_HOME_TO_MIN
-      SEND_VALasTXT("y1", READ(Y_MIN_PIN) == Y_MIN_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("y1", READ(Y_MIN_PIN) != Y_MIN_ENDSTOP_INVERTING ? "triggered" : "open");
     #elif Y_HOME_TO_MAX
-      SEND_VALasTXT("y2", READ(X_MAX_PIN) == Y_MAX_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("y2", READ(X_MAX_PIN) != Y_MAX_ENDSTOP_INVERTING ? "triggered" : "open");
     #endif
     #if Z_HOME_TO_MIN
-      SEND_VALasTXT("z1", READ(Z_MIN_PIN) == Z_MIN_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("z1", READ(Z_MIN_PIN) != Z_MIN_ENDSTOP_INVERTING ? "triggered" : "open");
     #elif Z_HOME_TO_MAX
-      SEND_VALasTXT("z2", READ(Z_MAX_PIN) == Z_MAX_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("z2", READ(Z_MAX_PIN) != Z_MAX_ENDSTOP_INVERTING ? "triggered" : "open");
     #endif
     #if USE_Z2_MIN
-      SEND_VALasTXT("z2", READ(Z2_MIN_PIN) == Z2_MIN_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("z2", READ(Z2_MIN_PIN) != Z2_MIN_ENDSTOP_INVERTING ? "triggered" : "open");
     #elif USE_Z2_MAX
-      SEND_VALasTXT("z2", READ(Z2_MAX_PIN) == Z2_MAX_ENDSTOP_HIT_STATE ? "triggered" : "open");
+      SEND_VALasTXT("z2", READ(Z2_MAX_PIN) != Z2_MAX_ENDSTOP_INVERTING ? "triggered" : "open");
     #endif
     #if HAS_BED_PROBE
       //SEND_VALasTXT("bltouch", PROBE_TRIGGERED() ? "triggered" : "open");

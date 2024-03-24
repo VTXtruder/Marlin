@@ -122,9 +122,6 @@ class Touch {
       static void wakeUp();
     #endif
     static void add_control(TouchControlType type, uint16_t x, uint16_t y, uint16_t width, uint16_t height, intptr_t data=0);
-    static void add_control(TouchControlType type, uint16_t x, uint16_t y, uint16_t width, uint16_t height, void (*handler)()) {
-      add_control(type, x, y, width, height, intptr_t(handler));
-    }
 };
 
 extern Touch touch;

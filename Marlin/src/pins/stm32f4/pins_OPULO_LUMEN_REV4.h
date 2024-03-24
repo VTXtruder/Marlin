@@ -158,7 +158,7 @@
 #define FAN_SOFT_PWM_REQUIRED
 
 //
-// Neopixel
+// NeoPixel
 //
 #define NEOPIXEL_PIN                        PC7
 #define NEOPIXEL2_PIN                       PC8

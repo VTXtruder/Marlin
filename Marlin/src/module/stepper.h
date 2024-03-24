@@ -84,8 +84,8 @@ typedef struct {
   };
 } stepper_flags_t;
 
-typedef bits_t(NUM_AXES + E_STATES) e_axis_bits_t;
-constexpr e_axis_bits_t e_axis_mask = (_BV(E_STATES) - 1) << NUM_AXES;
+  // The base ISR
+  #define ISR_BASE_CYCLES 770UL
 
 // All the stepper enable pins
 constexpr pin_t ena_pins[] = {
@@ -157,38 +157,31 @@ constexpr ena_mask_t enable_overlap[] = {
     #endif
   #endif
 
-  #ifndef SHAPING_MIN_FREQ
-    #define SHAPING_MIN_FREQ _MIN(0x7FFFFFFFL OPTARG(INPUT_SHAPING_X, SHAPING_FREQ_X) OPTARG(INPUT_SHAPING_Y, SHAPING_FREQ_Y))
+  // S curve interpolation adds 40 cycles
+  #if ENABLED(S_CURVE_ACCELERATION)
+    #ifdef STM32G0B1xx
+      #define ISR_S_CURVE_CYCLES 500UL
+    #else
+      #define ISR_S_CURVE_CYCLES 40UL
+    #endif
+  #else
+    #define ISR_S_CURVE_CYCLES 0UL
   #endif
   constexpr uint16_t shaping_min_freq = SHAPING_MIN_FREQ,
                      shaping_echoes = max_step_rate / shaping_min_freq / 2 + 3;
 
-  typedef hal_timer_t shaping_time_t;
-  enum shaping_echo_t { ECHO_NONE = 0, ECHO_FWD = 1, ECHO_BWD = 2 };
-  struct shaping_echo_axis_t {
-    TERN_(INPUT_SHAPING_X, shaping_echo_t x:2);
-    TERN_(INPUT_SHAPING_Y, shaping_echo_t y:2);
-  };
+  // Input shaping base time
+  #if HAS_ZV_SHAPING
+    #define ISR_SHAPING_BASE_CYCLES 180UL
+  #else
+    #define ISR_SHAPING_BASE_CYCLES 0UL
+  #endif
 
-  class ShapingQueue {
-    private:
-      static shaping_time_t       now;
-      static shaping_time_t       times[shaping_echoes];
-      static shaping_echo_axis_t  echo_axes[shaping_echoes];
-      static uint16_t             tail;
+  // Stepper Loop base cycles
+  #define ISR_LOOP_BASE_CYCLES 4UL
 
-      #if ENABLED(INPUT_SHAPING_X)
-        static shaping_time_t delay_x;    // = shaping_time_t(-1) to disable queueing
-        static shaping_time_t peek_x_val;
-        static uint16_t head_x;
-        static uint16_t _free_count_x;
-      #endif
-      #if ENABLED(INPUT_SHAPING_Y)
-        static shaping_time_t delay_y;    // = shaping_time_t(-1) to disable queueing
-        static shaping_time_t peek_y_val;
-        static uint16_t head_y;
-        static uint16_t _free_count_y;
-      #endif
+  // And each stepper (start + stop pulse) takes in worst case
+  #define ISR_STEPPER_CYCLES 100UL
 
     public:
       static void decrement_delays(const shaping_time_t interval) {
@@ -271,6 +264,352 @@ constexpr ena_mask_t enable_overlap[] = {
       }
   };
 
+  // The base ISR
+  #define ISR_BASE_CYCLES  996UL
+
+  // Linear advance base time is 32 cycles
+  #if ENABLED(LIN_ADVANCE)
+    #define ISR_LA_BASE_CYCLES 30UL
+  #else
+    #define ISR_LA_BASE_CYCLES 0UL
+  #endif
+
+  // S curve interpolation adds 160 cycles
+  #if ENABLED(S_CURVE_ACCELERATION)
+    #define ISR_S_CURVE_CYCLES 160UL
+  #else
+    #define ISR_S_CURVE_CYCLES 0UL
+  #endif
+
+  // Input shaping base time
+  #if HAS_ZV_SHAPING
+    #define ISR_SHAPING_BASE_CYCLES 290UL
+  #else
+    #define ISR_SHAPING_BASE_CYCLES 0UL
+  #endif
+
+  // Stepper Loop base cycles
+  #define ISR_LOOP_BASE_CYCLES 32UL
+
+  // And each stepper (start + stop pulse) takes in worst case
+  #define ISR_STEPPER_CYCLES 88UL
+
+#endif
+
+// If linear advance is disabled, the loop also handles them
+#if DISABLED(LIN_ADVANCE) && ENABLED(MIXING_EXTRUDER)
+  #define ISR_MIXING_STEPPER_CYCLES ((MIXING_STEPPERS) * (ISR_STEPPER_CYCLES))
+#else
+  #define ISR_MIXING_STEPPER_CYCLES  0UL
+#endif
+
+// Add time for each stepper
+#if HAS_X_STEP
+  #define ISR_X_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_Y_STEP
+  #define ISR_Y_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_Z_STEP
+  #define ISR_Z_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_I_STEP
+  #define ISR_I_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_J_STEP
+  #define ISR_J_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_K_STEP
+  #define ISR_K_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_U_STEP
+  #define ISR_U_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_V_STEP
+  #define ISR_V_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_W_STEP
+  #define ISR_W_STEPPER_CYCLES ISR_STEPPER_CYCLES
+#endif
+#if HAS_EXTRUDERS
+  #define ISR_E_STEPPER_CYCLES ISR_STEPPER_CYCLES // E is always interpolated, even for mixing extruders
+#endif
+
+// And the total minimum loop time, not including the base
+#define _PLUS_AXIS_CYCLES(A) + (ISR_##A##_STEPPER_CYCLES)
+#define MIN_ISR_LOOP_CYCLES (ISR_MIXING_STEPPER_CYCLES LOGICAL_AXIS_MAP(_PLUS_AXIS_CYCLES))
+
+// Calculate the minimum MPU cycles needed per pulse to enforce, limited to the max stepper rate
+#define _MIN_STEPPER_PULSE_CYCLES(N) _MAX(uint32_t((F_CPU) / (MAXIMUM_STEPPER_RATE)), ((F_CPU) / 500000UL) * (N))
+#if MINIMUM_STEPPER_PULSE
+  #define MIN_STEPPER_PULSE_CYCLES _MIN_STEPPER_PULSE_CYCLES(uint32_t(MINIMUM_STEPPER_PULSE))
+#elif HAS_DRIVER(LV8729)
+  #define MIN_STEPPER_PULSE_CYCLES uint32_t((((F_CPU) - 1) / 2000000) + 1) // 0.5µs, aka 500ns
+#else
+  #define MIN_STEPPER_PULSE_CYCLES _MIN_STEPPER_PULSE_CYCLES(1UL)
+#endif
+
+// Calculate the minimum pulse times (high and low)
+#if MINIMUM_STEPPER_PULSE && MAXIMUM_STEPPER_RATE
+  constexpr uint32_t _MIN_STEP_PERIOD_NS = 1000000000UL / MAXIMUM_STEPPER_RATE;
+  constexpr uint32_t _MIN_PULSE_HIGH_NS = 1000UL * MINIMUM_STEPPER_PULSE;
+  constexpr uint32_t _MIN_PULSE_LOW_NS = _MAX((_MIN_STEP_PERIOD_NS - _MIN(_MIN_STEP_PERIOD_NS, _MIN_PULSE_HIGH_NS)), _MIN_PULSE_HIGH_NS);
+#elif MINIMUM_STEPPER_PULSE
+  // Assume 50% duty cycle
+  constexpr uint32_t _MIN_PULSE_HIGH_NS = 1000UL * MINIMUM_STEPPER_PULSE;
+  constexpr uint32_t _MIN_PULSE_LOW_NS = _MIN_PULSE_HIGH_NS;
+#elif MAXIMUM_STEPPER_RATE
+  // Assume 50% duty cycle
+  constexpr uint32_t _MIN_PULSE_HIGH_NS = 500000000UL / MAXIMUM_STEPPER_RATE;
+  constexpr uint32_t _MIN_PULSE_LOW_NS = _MIN_PULSE_HIGH_NS;
+#else
+  #error "Expected at least one of MINIMUM_STEPPER_PULSE or MAXIMUM_STEPPER_RATE to be defined"
+#endif
+
+// The loop takes the base time plus the time for all the bresenham logic for R pulses plus the time
+// between pulses for (R-1) pulses. But the user could be enforcing a minimum time so the loop time is:
+#define ISR_LOOP_CYCLES(R) ((ISR_LOOP_BASE_CYCLES + MIN_ISR_LOOP_CYCLES + MIN_STEPPER_PULSE_CYCLES) * (R - 1) + _MAX(MIN_ISR_LOOP_CYCLES, MIN_STEPPER_PULSE_CYCLES))
+
+// Model input shaping as an extra loop call
+#define ISR_SHAPING_LOOP_CYCLES(R) TERN0(HAS_ZV_SHAPING, (R) * ((ISR_LOOP_BASE_CYCLES) + TERN0(INPUT_SHAPING_X, ISR_X_STEPPER_CYCLES) + TERN0(INPUT_SHAPING_Y, ISR_Y_STEPPER_CYCLES)))
+
+// If linear advance is enabled, then it is handled separately
+#if ENABLED(LIN_ADVANCE)
+
+  // Estimate the minimum LA loop time
+  #if ENABLED(MIXING_EXTRUDER) // ToDo: ???
+    // HELP ME: What is what?
+    // Directions are set up for MIXING_STEPPERS - like before.
+    // Finding the right stepper may last up to MIXING_STEPPERS loops in get_next_stepper().
+    //   These loops are a bit faster than advancing a bresenham counter.
+    // Always only one E stepper is stepped.
+    #define MIN_ISR_LA_LOOP_CYCLES ((MIXING_STEPPERS) * (ISR_STEPPER_CYCLES))
+  #else
+    #define MIN_ISR_LA_LOOP_CYCLES ISR_STEPPER_CYCLES
+  #endif
+
+  // And the real loop time
+  #define ISR_LA_LOOP_CYCLES _MAX(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LA_LOOP_CYCLES)
+
+#else
+  #define ISR_LA_LOOP_CYCLES 0UL
+#endif
+
+// Now estimate the total ISR execution time in cycles given a step per ISR multiplier
+#define ISR_EXECUTION_CYCLES(R) (((ISR_BASE_CYCLES + ISR_S_CURVE_CYCLES + ISR_SHAPING_BASE_CYCLES + ISR_LOOP_CYCLES(R) + ISR_SHAPING_LOOP_CYCLES(R) + ISR_LA_BASE_CYCLES + ISR_LA_LOOP_CYCLES)) / (R))
+
+// The maximum allowable stepping frequency when doing x128-x1 stepping (in Hz)
+#define MAX_STEP_ISR_FREQUENCY_128X ((F_CPU) / ISR_EXECUTION_CYCLES(128))
+#define MAX_STEP_ISR_FREQUENCY_64X  ((F_CPU) / ISR_EXECUTION_CYCLES(64))
+#define MAX_STEP_ISR_FREQUENCY_32X  ((F_CPU) / ISR_EXECUTION_CYCLES(32))
+#define MAX_STEP_ISR_FREQUENCY_16X  ((F_CPU) / ISR_EXECUTION_CYCLES(16))
+#define MAX_STEP_ISR_FREQUENCY_8X   ((F_CPU) / ISR_EXECUTION_CYCLES(8))
+#define MAX_STEP_ISR_FREQUENCY_4X   ((F_CPU) / ISR_EXECUTION_CYCLES(4))
+#define MAX_STEP_ISR_FREQUENCY_2X   ((F_CPU) / ISR_EXECUTION_CYCLES(2))
+#define MAX_STEP_ISR_FREQUENCY_1X   ((F_CPU) / ISR_EXECUTION_CYCLES(1))
+
+// The minimum step ISR rate used by ADAPTIVE_STEP_SMOOTHING to target 50% CPU usage
+// This does not account for the possibility of multi-stepping.
+// Perhaps DISABLE_MULTI_STEPPING should be required with ADAPTIVE_STEP_SMOOTHING.
+#define MIN_STEP_ISR_FREQUENCY (MAX_STEP_ISR_FREQUENCY_1X / 2)
+
+// TODO: Review and ensure proper handling for special E axes with commands like M17/M18, stepper timeout, etc.
+#if ENABLED(MIXING_EXTRUDER)
+  #define E_STATES EXTRUDERS  // All steppers are set together for each mixer. (Currently limited to 1.)
+#elif ENABLED(SWITCHING_EXTRUDER)
+  #define E_STATES E_STEPPERS // One stepper for every two EXTRUDERS. The last extruder can be non-switching.
+#elif HAS_PRUSA_MMU2
+  #define E_STATES E_STEPPERS // One E stepper shared with all EXTRUDERS, so setting any only sets one.
+#else
+  #define E_STATES E_STEPPERS // One stepper for each extruder, so each can be disabled individually.
+#endif
+
+// Number of axes that could be enabled/disabled. Dual/multiple steppers are combined.
+#define ENABLE_COUNT (NUM_AXES + E_STATES)
+typedef bits_t(ENABLE_COUNT) ena_mask_t;
+
+// Axis flags type, for enabled state or other simple state
+typedef struct {
+  union {
+    ena_mask_t bits;
+    struct {
+      #if NUM_AXES
+        bool NUM_AXIS_LIST(X:1, Y:1, Z:1, I:1, J:1, K:1, U:1, V:1, W:1);
+      #endif
+      #if E_STATES
+        bool LIST_N(E_STATES, E0:1, E1:1, E2:1, E3:1, E4:1, E5:1, E6:1, E7:1);
+      #endif
+    };
+  };
+} stepper_flags_t;
+
+typedef bits_t(NUM_AXES + E_STATES) e_axis_bits_t;
+constexpr e_axis_bits_t e_axis_mask = (_BV(E_STATES) - 1) << NUM_AXES;
+
+// All the stepper enable pins
+constexpr pin_t ena_pins[] = {
+  NUM_AXIS_LIST_(X_ENABLE_PIN, Y_ENABLE_PIN, Z_ENABLE_PIN, I_ENABLE_PIN, J_ENABLE_PIN, K_ENABLE_PIN, U_ENABLE_PIN, V_ENABLE_PIN, W_ENABLE_PIN)
+  LIST_N(E_STEPPERS, E0_ENABLE_PIN, E1_ENABLE_PIN, E2_ENABLE_PIN, E3_ENABLE_PIN, E4_ENABLE_PIN, E5_ENABLE_PIN, E6_ENABLE_PIN, E7_ENABLE_PIN)
+};
+
+// Index of the axis or extruder element in a combined array
+constexpr uint8_t index_of_axis(const AxisEnum axis E_OPTARG(const uint8_t eindex=0)) {
+  return uint8_t(axis) + (E_TERN0(axis < NUM_AXES ? 0 : eindex));
+}
+//#define __IAX_N(N,V...)           _IAX_##N(V)
+//#define _IAX_N(N,V...)            __IAX_N(N,V)
+//#define _IAX_1(A)                 index_of_axis(A)
+//#define _IAX_2(A,B)               index_of_axis(A E_OPTARG(B))
+//#define INDEX_OF_AXIS(V...)       _IAX_N(TWO_ARGS(V),V)
+
+#define INDEX_OF_AXIS(A,V...)     index_of_axis(A E_OPTARG(V+0))
+
+// Bit mask for a matching enable pin, or 0
+constexpr ena_mask_t ena_same(const uint8_t a, const uint8_t b) {
+  return ena_pins[a] == ena_pins[b] ? _BV(b) : 0;
+}
+
+// Recursively get the enable overlaps mask for a given linear axis or extruder
+constexpr ena_mask_t ena_overlap(const uint8_t a=0, const uint8_t b=0) {
+  return b >= ENABLE_COUNT ? 0 : (a == b ? 0 : ena_same(a, b)) | ena_overlap(a, b + 1);
+}
+
+// Recursively get whether there's any overlap at all
+constexpr bool any_enable_overlap(const uint8_t a=0) {
+  return a >= ENABLE_COUNT ? false : ena_overlap(a) || any_enable_overlap(a + 1);
+}
+
+// Array of axes that overlap with each
+// TODO: Consider cases where >=2 steppers are used by a linear axis or extruder
+//       (e.g., CoreXY, Dual XYZ, or E with multiple steppers, etc.).
+constexpr ena_mask_t enable_overlap[] = {
+  #define _OVERLAP(N) ena_overlap(INDEX_OF_AXIS(AxisEnum(N))),
+  REPEAT(NUM_AXES, _OVERLAP)
+  #if HAS_EXTRUDERS
+    #define _E_OVERLAP(N) ena_overlap(INDEX_OF_AXIS(E_AXIS, N)),
+    REPEAT(E_STEPPERS, _E_OVERLAP)
+  #endif
+};
+
+//static_assert(!any_enable_overlap(), "There is some overlap.");
+
+#if HAS_ZV_SHAPING
+
+  #ifdef SHAPING_MAX_STEPRATE
+    constexpr float max_step_rate = SHAPING_MAX_STEPRATE;
+  #else
+    constexpr float     _ISDASU[] = DEFAULT_AXIS_STEPS_PER_UNIT;
+    constexpr feedRate_t _ISDMF[] = DEFAULT_MAX_FEEDRATE;
+    constexpr float max_shaped_rate = TERN0(INPUT_SHAPING_X, _ISDMF[X_AXIS] * _ISDASU[X_AXIS]) +
+                                      TERN0(INPUT_SHAPING_Y, _ISDMF[Y_AXIS] * _ISDASU[Y_AXIS]);
+    #if defined(__AVR__) || !defined(ADAPTIVE_STEP_SMOOTHING)
+      // MIN_STEP_ISR_FREQUENCY is known at compile time on AVRs and any reduction in SRAM is welcome
+      template<int INDEX=DISTINCT_AXES> constexpr float max_isr_rate() {
+        return _MAX(_ISDMF[INDEX - 1] * _ISDASU[INDEX - 1], max_isr_rate<INDEX - 1>());
+      }
+      template<> constexpr float max_isr_rate<0>() {
+        return TERN0(ADAPTIVE_STEP_SMOOTHING, MIN_STEP_ISR_FREQUENCY);
+      }
+      constexpr float max_step_rate = _MIN(max_isr_rate(), max_shaped_rate);
+    #else
+      constexpr float max_step_rate = max_shaped_rate;
+    #endif
+  #endif
+
+  #ifndef SHAPING_MIN_FREQ
+    #define SHAPING_MIN_FREQ _MIN(0x7FFFFFFFL OPTARG(INPUT_SHAPING_X, SHAPING_FREQ_X) OPTARG(INPUT_SHAPING_Y, SHAPING_FREQ_Y))
+  #endif
+  constexpr uint16_t shaping_min_freq = SHAPING_MIN_FREQ,
+                     shaping_echoes = max_step_rate / shaping_min_freq / 2 + 3;
+
+  typedef IF<ENABLED(__AVR__), uint16_t, uint32_t>::type shaping_time_t;
+  enum shaping_echo_t { ECHO_NONE = 0, ECHO_FWD = 1, ECHO_BWD = 2 };
+  struct shaping_echo_axis_t {
+    TERN_(INPUT_SHAPING_X, shaping_echo_t x:2);
+    TERN_(INPUT_SHAPING_Y, shaping_echo_t y:2);
+  };
+
+  class ShapingQueue {
+    private:
+      static shaping_time_t       now;
+      static shaping_time_t       times[shaping_echoes];
+      static shaping_echo_axis_t  echo_axes[shaping_echoes];
+      static uint16_t             tail;
+
+      #if ENABLED(INPUT_SHAPING_X)
+        static shaping_time_t delay_x;    // = shaping_time_t(-1) to disable queueing
+        static shaping_time_t peek_x_val;
+        static uint16_t head_x;
+        static uint16_t _free_count_x;
+      #endif
+      #if ENABLED(INPUT_SHAPING_Y)
+        static shaping_time_t delay_y;    // = shaping_time_t(-1) to disable queueing
+        static shaping_time_t peek_y_val;
+        static uint16_t head_y;
+        static uint16_t _free_count_y;
+      #endif
+
+    public:
+      static void decrement_delays(const shaping_time_t interval) {
+        now += interval;
+        TERN_(INPUT_SHAPING_X, if (peek_x_val != shaping_time_t(-1)) peek_x_val -= interval);
+        TERN_(INPUT_SHAPING_Y, if (peek_y_val != shaping_time_t(-1)) peek_y_val -= interval);
+      }
+      static void set_delay(const AxisEnum axis, const shaping_time_t delay) {
+        TERN_(INPUT_SHAPING_X, if (axis == X_AXIS) delay_x = delay);
+        TERN_(INPUT_SHAPING_Y, if (axis == Y_AXIS) delay_y = delay);
+      }
+      static void enqueue(const bool x_step, const bool x_forward, const bool y_step, const bool y_forward) {
+        TERN_(INPUT_SHAPING_X, if (head_x == tail && x_step) peek_x_val = delay_x);
+        TERN_(INPUT_SHAPING_Y, if (head_y == tail && y_step) peek_y_val = delay_y);
+        times[tail] = now;
+        TERN_(INPUT_SHAPING_X, echo_axes[tail].x = x_step ? (x_forward ? ECHO_FWD : ECHO_BWD) : ECHO_NONE);
+        TERN_(INPUT_SHAPING_Y, echo_axes[tail].y = y_step ? (y_forward ? ECHO_FWD : ECHO_BWD) : ECHO_NONE);
+        if (++tail == shaping_echoes) tail = 0;
+        TERN_(INPUT_SHAPING_X, _free_count_x--);
+        TERN_(INPUT_SHAPING_Y, _free_count_y--);
+        TERN_(INPUT_SHAPING_X, if (echo_axes[head_x].x == ECHO_NONE) dequeue_x());
+        TERN_(INPUT_SHAPING_Y, if (echo_axes[head_y].y == ECHO_NONE) dequeue_y());
+      }
+      #if ENABLED(INPUT_SHAPING_X)
+        static shaping_time_t peek_x() { return peek_x_val; }
+        static bool dequeue_x() {
+          bool forward = echo_axes[head_x].x == ECHO_FWD;
+          do {
+            _free_count_x++;
+            if (++head_x == shaping_echoes) head_x = 0;
+          } while (head_x != tail && echo_axes[head_x].x == ECHO_NONE);
+          peek_x_val = head_x == tail ? shaping_time_t(-1) : times[head_x] + delay_x - now;
+          return forward;
+        }
+        static bool empty_x() { return head_x == tail; }
+        static uint16_t free_count_x() { return _free_count_x; }
+      #endif
+      #if ENABLED(INPUT_SHAPING_Y)
+        static shaping_time_t peek_y() { return peek_y_val; }
+        static bool dequeue_y() {
+          bool forward = echo_axes[head_y].y == ECHO_FWD;
+          do {
+            _free_count_y++;
+            if (++head_y == shaping_echoes) head_y = 0;
+          } while (head_y != tail && echo_axes[head_y].y == ECHO_NONE);
+          peek_y_val = head_y == tail ? shaping_time_t(-1) : times[head_y] + delay_y - now;
+          return forward;
+        }
+        static bool empty_y() { return head_y == tail; }
+        static uint16_t free_count_y() { return _free_count_y; }
+      #endif
+      static void purge() {
+        const auto st = shaping_time_t(-1);
+        #if ENABLED(INPUT_SHAPING_X)
+          head_x = tail; _free_count_x = shaping_echoes - 1; peek_x_val = st;
+        #endif
+        #if ENABLED(INPUT_SHAPING_Y)
+          head_y = tail; _free_count_y = shaping_echoes - 1; peek_y_val = st;
+        #endif
+      }
+  };
+
   struct ShapeParams {
     float frequency;
     float zeta;
@@ -288,8 +627,6 @@ constexpr ena_mask_t enable_overlap[] = {
 // Stepper class definition
 //
 class Stepper {
-  friend class Max7219;
-  friend class FxdTiCtrl;
   friend void stepperTask(void *);
 
   public:
@@ -323,15 +660,15 @@ class Stepper {
     #endif
 
     #if ENABLED(FREEZE_FEATURE)
-      static bool frozen;                 // Set this flag to instantly freeze motion
+      static bool frozen;                   // Set this flag to instantly freeze motion
     #endif
 
   private:
 
     static block_t* current_block;        // A pointer to the block currently being traced
 
-    static AxisBits last_direction_bits,  // The next stepping-bits to be output
-                    axis_did_move;        // Last Movement in the given direction is not null, as computed when the last movement was fetched from planner
+    static axis_bits_t last_direction_bits, // The next stepping-bits to be output
+                       axis_did_move;       // Last Movement in the given direction is not null, as computed when the last movement was fetched from planner
 
     static bool abort_current_block;      // Signals to the stepper that current block should be aborted
 
@@ -407,6 +744,15 @@ class Stepper {
     #endif
 
     #if ENABLED(LIN_ADVANCE)
+      static constexpr uint32_t LA_ADV_NEVER = 0xFFFFFFFF;
+      static uint32_t nextAdvanceISR,
+                      la_interval;      // Interval between ISR calls for LA
+      static int32_t  la_delta_error,   // Analogue of delta_error.e for E steps in LA ISR
+                      la_dividend,      // Analogue of advance_dividend.e for E steps in LA ISR
+                      la_advance_steps; // Count of steps added to increase nozzle pressure
+    #endif
+
+    #if ENABLED(LIN_ADVANCE)
       static constexpr hal_timer_t LA_ADV_NEVER = HAL_TIMER_TYPE_MAX;
       static hal_timer_t nextAdvanceISR,
                          la_interval;      // Interval between ISR calls for LA
@@ -465,6 +811,10 @@ class Stepper {
 
     // The stepper block processing ISR phase
     static hal_timer_t block_phase_isr();
+
+    #if HAS_ZV_SHAPING
+      static void shaping_isr();
+    #endif
 
     #if HAS_ZV_SHAPING
       static void shaping_isr();
@@ -632,15 +982,10 @@ class Stepper {
     static void apply_directions();
 
     // Set direction bits and update all stepper DIR states
-    static void set_directions(const AxisBits bits) {
+    static void set_directions(const axis_bits_t bits) {
       last_direction_bits = bits;
       apply_directions();
     }
-
-    #if ENABLED(FT_MOTION)
-      // Manage the planner
-      static void fxdTiCtrl_BlockQueueUpdate();
-    #endif
 
     #if HAS_ZV_SHAPING
       static void set_shaping_damping_ratio(const AxisEnum axis, const_float_t zeta);
@@ -654,11 +999,9 @@ class Stepper {
     // Set the current position in steps
     static void _set_position(const abce_long_t &spos);
 
-    // Calculate the timing interval for the given step rate
-    static hal_timer_t calc_timer_interval(uint32_t step_rate);
-
-    // Calculate timing interval and steps-per-ISR for the given step rate
-    static hal_timer_t calc_multistep_timer_interval(uint32_t step_rate);
+    // Calculate timing interval for the given step rate
+    static uint32_t calc_timer_interval(uint32_t step_rate);
+    static uint32_t calc_timer_interval(uint32_t step_rate, uint8_t &loops);
 
     #if ENABLED(S_CURVE_ACCELERATION)
       static void _calc_bezier_curve_coeffs(const int32_t v0, const int32_t v1, const uint32_t av);

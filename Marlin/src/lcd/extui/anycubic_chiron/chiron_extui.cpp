@@ -42,28 +42,28 @@ namespace ExtUI {
   void onIdle() { chiron.idleLoop(); }
 
   void onPrinterKilled(FSTR_P const error, FSTR_P const component) {
-    chiron.printerKilled(error, component);
+    Chiron.PrinterKilled(error, component);
   }
 
   void onMediaInserted() { chiron.mediaEvent(AC_media_inserted); }
   void onMediaError()    { chiron.mediaEvent(AC_media_error);    }
   void onMediaRemoved()  { chiron.mediaEvent(AC_media_removed);  }
 
-  void onPlayTone(const uint16_t frequency, const uint16_t duration) {
+  void onPlayTone(const uint16_t frequency, const uint16_t duration/*=0*/) {
     #if ENABLED(SPEAKER)
       ::tone(BEEPER_PIN, frequency, duration);
     #endif
   }
 
-  void onPrintTimerStarted() { chiron.timerEvent(AC_timer_started); }
-  void onPrintTimerPaused()  { chiron.timerEvent(AC_timer_paused);  }
-  void onPrintTimerStopped() { chiron.timerEvent(AC_timer_stopped); }
+  void onPrintTimerStarted() { Chiron.TimerEvent(AC_timer_started); }
+  void onPrintTimerPaused()  { Chiron.TimerEvent(AC_timer_paused);  }
+  void onPrintTimerStopped() { Chiron.TimerEvent(AC_timer_stopped); }
   void onPrintDone() {}
 
-  void onFilamentRunout(const extruder_t)            { chiron.filamentRunout();             }
+  void onFilamentRunout(const extruder_t)            { Chiron.FilamentRunout();             }
 
-  void onUserConfirmRequired(const char * const msg) { chiron.confirmationRequest(msg);     }
-  void onStatusChanged(const char * const msg)       { chiron.statusChange(msg);            }
+  void onUserConfirmRequired(const char * const msg) { Chiron.ConfirmationRequest(msg);     }
+  void onStatusChanged(const char * const msg)       { Chiron.StatusChange(msg);            }
 
   void onHomingStart() {}
   void onHomingDone() {}

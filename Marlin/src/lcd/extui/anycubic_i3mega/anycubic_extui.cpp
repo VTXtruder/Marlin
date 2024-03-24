@@ -35,13 +35,13 @@
 
 namespace ExtUI {
 
-  void onStartup()        { anycubicTFT.onSetup(); }
-  void onIdle()           { anycubicTFT.onCommandScan(); }
-  void onPrinterKilled(FSTR_P const error, FSTR_P const component) { anycubicTFT.onKillTFT(); }
-  void onMediaInserted()  { anycubicTFT.onSDCardStateChange(true); }
-  void onMediaError()     { anycubicTFT.onSDCardError(); }
-  void onMediaRemoved()   { anycubicTFT.onSDCardStateChange(false); }
-  void onPlayTone(const uint16_t frequency, const uint16_t duration) {
+  void onStartup()        { AnycubicTFT.OnSetup(); }
+  void onIdle()           { AnycubicTFT.OnCommandScan(); }
+  void onPrinterKilled(FSTR_P const error, FSTR_P const component) { AnycubicTFT.OnKillTFT(); }
+  void onMediaInserted()  { AnycubicTFT.OnSDCardStateChange(true); }
+  void onMediaError()     { AnycubicTFT.OnSDCardError(); }
+  void onMediaRemoved()   { AnycubicTFT.OnSDCardStateChange(false); }
+  void onPlayTone(const uint16_t frequency, const uint16_t duration/*=0*/) {
     TERN_(SPEAKER, ::tone(BEEPER_PIN, frequency, duration));
   }
   void onPrintTimerStarted()  { anycubicTFT.onPrintTimerStarted(); }

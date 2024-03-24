@@ -41,7 +41,7 @@
   #include "../../feature/powerloss.h"
 #endif
 
-#if DGUS_LCD_UI_MKS
+#if ENABLED(DGUS_LCD_UI_MKS)
   #include "../../lcd/extui/dgus/DGUSDisplayDef.h"
 #endif
 

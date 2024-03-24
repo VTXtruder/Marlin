@@ -44,7 +44,7 @@ void Canvas::instantiate(uint16_t x, uint16_t y, uint16_t width, uint16_t height
 
 void Canvas::next() {
   startLine = endLine;
-  endLine = (TFT_BUFFER_WORDS) < width * (height - startLine) ? startLine + (TFT_BUFFER_WORDS) / width : height;
+  endLine = TFT_BUFFER_WORDS < width * (height - startLine) ? startLine + TFT_BUFFER_WORDS / width : height;
 }
 
 bool Canvas::toScreen() {
@@ -52,7 +52,7 @@ bool Canvas::toScreen() {
   return endLine == height;
 }
 
-void Canvas::setBackground(uint16_t color) {
+void CANVAS::SetBackground(uint16_t color) {
   /* TODO: test and optimize performance */
   /*
   uint32_t count = (endLine - startLine) * width;

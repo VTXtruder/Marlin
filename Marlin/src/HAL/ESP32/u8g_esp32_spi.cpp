@@ -41,7 +41,6 @@
 
 static SPISettings spiConfig;
 
-
 #ifndef LCD_SPI_SPEED
   #ifdef SD_SPI_SPEED
     #define LCD_SPI_SPEED SD_SPI_SPEED    // Assume SPI speed shared with SD

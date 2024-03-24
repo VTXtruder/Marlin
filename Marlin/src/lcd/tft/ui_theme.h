@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2023 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2021 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -21,15 +21,20 @@
  */
 #pragma once
 
-#include "../../inc/MarlinConfigPre.h"
+/**
+ * Print Stats page for PRO UI
+ * Author: Miguel A. Risco-Castillo (MRISCOC)
+ * Version: 1.4.2
+ * Date: 2022/12/03
+ */
 
-#ifndef TFT_THEME
-  #define TFT_THEME BLUE_MARLIN
-#endif
+class PrintStatsClass {
+public:
+  static void Draw();
+  static void Reset();
+};
 
-#define TFT_THEME_INCL_(M) STRINGIFY_(themes/theme_##M.h)
-#define TFT_THEME_INCL(M) TFT_THEME_INCL_(M)
+extern PrintStatsClass PrintStats;
 
-#include "tft_color.h"
-#include TFT_THEME_INCL(TFT_THEME)
-#include "themes/theme_default.h"
+void Goto_PrintStats();
+void PrintStatsReset();

@@ -65,8 +65,8 @@ private:
   static uint16_t getRawData(const XPTCoordinate coordinate);
   static bool isTouched();
 
-  static void dataTransferBegin() { WRITE(TOUCH_CS_PIN, LOW); };
-  static void dataTransferEnd() { WRITE(TOUCH_CS_PIN, HIGH); };
+  static void DataTransferBegin() { WRITE(TOUCH_CS_PIN, LOW); };
+  static void DataTransferEnd() { WRITE(TOUCH_CS_PIN, HIGH); };
   #if ENABLED(TOUCH_BUTTONS_HW_SPI)
     static uint16_t hardwareIO(uint16_t data);
   #endif

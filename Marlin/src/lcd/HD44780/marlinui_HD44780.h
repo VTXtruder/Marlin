@@ -103,4 +103,5 @@
 
 #endif
 
+#include "../utf8.h"
 #include "../lcdprint.h"

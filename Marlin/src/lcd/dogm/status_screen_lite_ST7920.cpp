@@ -73,6 +73,7 @@
 #if ENABLED(LIGHTWEIGHT_UI)
 
 #include "../marlinui.h"
+#include "../utf8.h"
 #include "../lcdprint.h"
 #include "../../libs/duration_t.h"
 #include "../../module/motion.h"
@@ -593,7 +594,7 @@ void ST7920_Lite_Status_Screen::draw_status_message() {
           write_byte(' ');
           if (--chars) {                            // Draw a third space if there's room
             write_byte(' ');
-            if (--chars) write_str(ui.status_message, chars);  // Print a second copy of the message
+            if (--chars) write_str(str, chars);     // Print a second copy of the message
           }
         }
       }
@@ -677,17 +678,17 @@ bool ST7920_Lite_Status_Screen::indicators_changed() {
   void ST7920_Lite_Status_Screen::draw_progress_string(uint8_t addr, const char *str) {
     set_ddram_address(addr);
     begin_data();
-    write_str(str, TERN(HOTENDS == 1, 8, 6));
+    write_str(str, HOTENDS == 1 ? 8 : 6);
   }
 
-  #define PPOS (DDRAM_LINE_3 + TERN(HOTENDS == 1, 4, 5)) // progress string position, in 16-bit words
+  constexpr uint8_t PPOS = (DDRAM_LINE_3 + (HOTENDS == 1 ? 4 : 5)); // Progress string position, in 16-bit words
 
   #if ENABLED(SHOW_PROGRESS_PERCENT)
     void MarlinUI::drawPercent() { lightUI.drawPercent(); }
     void ST7920_Lite_Status_Screen::drawPercent() {
       #define LSHIFT TERN(HOTENDS == 1, 0, 1)
       const uint8_t progress = ui.get_progress_percent();
-      memset(&screenstr, 0x20, 8); // fill with spaces to avoid artifacts
+      memset(&screenstr, ' ', 8); // fill with spaces to avoid artifacts
       if (progress){
         memcpy(&screenstr[2 - LSHIFT], \
                   TERN(PRINT_PROGRESS_SHOW_DECIMALS, permyriadtostr4(ui.get_progress_permyriad()), ui8tostr3rj(progress)), \

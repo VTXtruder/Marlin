@@ -70,7 +70,7 @@ void encoderConfiguration() {
 }
 
 // Analyze encoder value and return state
-EncoderState encoderReceiveAnalyze() {
+EncoderState Encoder_ReceiveAnalyze() {
   const millis_t now = millis();
   static uint8_t lastEncoderBits;
   uint8_t newbutton = 0;
@@ -86,9 +86,6 @@ EncoderState encoderReceiveAnalyze() {
       Encoder_tick();
       #if PIN_EXISTS(LCD_LED)
         //LED_Action();
-      #endif
-      #if LCD_BACKLIGHT_TIMEOUT_MINS
-        ui.refresh_backlight_timeout();
       #endif
       if (!ui.backlight) {
         ui.refresh_brightness();
@@ -161,9 +158,7 @@ EncoderState encoderReceiveAnalyze() {
     temp_diff = 0;
   }
   if (temp_diffState != ENCODER_DIFF_NO) {
-    #if LCD_BACKLIGHT_TIMEOUT_MINS
-      ui.refresh_backlight_timeout();
-    #endif
+    TERN_(HAS_BACKLIGHT_TIMEOUT, ui.refresh_backlight_timeout());
     if (!ui.backlight) ui.refresh_brightness();
   }
   return temp_diffState;

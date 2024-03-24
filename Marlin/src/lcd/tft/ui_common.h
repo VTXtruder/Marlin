@@ -116,60 +116,21 @@ void text_line(const uint16_t y, uint16_t color=COLOR_BACKGROUND);
 void menu_line(const uint8_t row, uint16_t color=COLOR_BACKGROUND);
 void menu_item(const uint8_t row, bool sel = false);
 
-typedef void (*screenFunc_t)();
-void add_control(
-  uint16_t x, uint16_t y, TouchControlType control_type, intptr_t data, MarlinImage image, bool is_enabled=true,
-  uint16_t color_enabled=COLOR_CONTROL_ENABLED, uint16_t color_disabled=COLOR_CONTROL_DISABLED
-);
-inline void add_control(
-  uint16_t x, uint16_t y, TouchControlType control_type, MarlinImage image,
-  bool is_enabled=true, uint16_t color_enabled=COLOR_CONTROL_ENABLED, uint16_t color_disabled=COLOR_CONTROL_DISABLED
-) {
-  add_control(x, y, control_type, 0, image, is_enabled, color_enabled, color_disabled);
-}
-#if ENABLED(TOUCH_SCREEN)
-  inline void add_control(
-    uint16_t x, uint16_t y, TouchControlType control_type, screenFunc_t action, MarlinImage image, bool is_enabled=true,
-    uint16_t color_enabled=COLOR_CONTROL_ENABLED, uint16_t color_disabled=COLOR_CONTROL_DISABLED
-  ) {
-    add_control(x, y, control_type, (intptr_t)action, image, is_enabled, color_enabled, color_disabled);
-  }
-  inline void add_control(
-    uint16_t x, uint16_t y, screenFunc_t screen, MarlinImage image, bool is_enabled=true,
-    uint16_t color_enabled=COLOR_CONTROL_ENABLED, uint16_t color_disabled=COLOR_CONTROL_DISABLED
-  ) {
-    add_control(x, y, MENU_SCREEN, (intptr_t)screen, image, is_enabled, color_enabled, color_disabled);
-  }
+#if HAS_TOUCH_SLEEP
+  bool lcd_sleep_task();
 #endif
-
-void drawBtn(const int x, const int y, const char *label, intptr_t data, const MarlinImage btnimg, const MarlinImage img, uint16_t bgColor, const bool enabled=true);
-void drawBtn(const int x, const int y, const char *label, intptr_t data, const MarlinImage img, uint16_t bgColor, const bool enabled=true);
-inline void drawBtn(const int x, const int y, const char *label, void (*handler)(), const MarlinImage img, uint16_t bgColor, const bool enabled=true) {
-  drawBtn(x, y, label, intptr_t(handler), img, bgColor, enabled);
-}
-
-// Custom Implementation
-void drawMessage_P(PGM_P const msg);
-inline void drawMessage(FSTR_P const fmsg) { drawMessage_P(FTOP(fmsg)); }
-
-void drawAxisValue(const AxisEnum axis);
-void drawCurZSelection();
-void drawCurESelection();
-void drawCurStepValue();
 
 #define ABSOLUTE_ZERO     -273.15
 
-#if DISABLED(CUSTOM_STATUS_SCREEN_ITEMS_ORDER)
-  enum {
-    OPTITEM(HAS_EXTRUDERS, ITEM_E0)
-    OPTITEM(HAS_MULTI_HOTEND, ITEM_E1)
-    #if HOTENDS > 2
-      ITEM_E2,
-    #endif
-    OPTITEM(HAS_HEATED_BED, ITEM_BED)
-    OPTITEM(HAS_TEMP_CHAMBER, ITEM_CHAMBER)
-    OPTITEM(HAS_TEMP_COOLER, ITEM_COOLER)
-    OPTITEM(HAS_FAN, ITEM_FAN)
-    ITEMS_COUNT
-  };
-#endif
+enum {
+  OPTITEM(HAS_EXTRUDERS, ITEM_E0)
+  OPTITEM(HAS_MULTI_HOTEND, ITEM_E1)
+  #if HOTENDS > 2
+    ITEM_E2,
+  #endif
+  OPTITEM(HAS_HEATED_BED, ITEM_BED)
+  OPTITEM(HAS_TEMP_CHAMBER, ITEM_CHAMBER)
+  OPTITEM(HAS_TEMP_COOLER, ITEM_COOLER)
+  OPTITEM(HAS_FAN, ITEM_FAN)
+  ITEMS_COUNT
+};

@@ -43,7 +43,7 @@
 #endif
 
 #ifndef POWER_LOSS_ZRAISE
-  #define POWER_LOSS_ZRAISE 2
+  #define POWER_LOSS_ZRAISE 2 // Default Z-raise on outage or resume
 #endif
 
 //#define DEBUG_POWER_LOSS_RECOVERY
@@ -67,8 +67,8 @@ typedef struct {
   #if HAS_HOME_OFFSET
     xyz_pos_t home_offset;
   #endif
-  #if HAS_WORKSPACE_OFFSET
-    xyz_pos_t workspace_offset;
+  #if HAS_POSITION_SHIFT
+    xyz_pos_t position_shift;
   #endif
   #if HAS_MULTI_EXTRUDER
     uint8_t active_extruder;

@@ -354,10 +354,12 @@ void TFT_LTDC::transmit(tft_data_t data) {
 
 void TFT_LTDC::transmit(uint32_t memoryIncrease, uint16_t *data, uint16_t count) {
 
-  while (x_cur != x_min && count) {
-    transmit(*data);
-    if (memoryIncrease == DMA_PINC_ENABLE) data++;
-    count--;
+void TFT_LTDC::Transmit(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count) {
+
+  while (x_cur != x_min && Count) {
+    Transmit(*Data);
+    if (MemoryIncrease == DMA_PINC_ENABLE) Data++;
+    Count--;
   }
 
   uint16_t width = x_max - x_min + 1;
@@ -365,12 +367,12 @@ void TFT_LTDC::transmit(uint32_t memoryIncrease, uint16_t *data, uint16_t count)
   uint16_t x_end_cnt = count - (width * height);
 
   if (height) {
-    if (memoryIncrease == DMA_PINC_ENABLE) {
-      drawImage(x_min, y_cur, x_min + width, y_cur + height, data);
-      data += width * height;
+    if (MemoryIncrease == DMA_PINC_ENABLE) {
+      DrawImage(x_min, y_cur, x_min + width, y_cur + height, Data);
+      Data += width * height;
     }
     else
-      drawRect(x_min, y_cur, x_min + width, y_cur + height, *data);
+      DrawRect(x_min, y_cur, x_min + width, y_cur + height, *Data);
     y_cur += height;
   }
 

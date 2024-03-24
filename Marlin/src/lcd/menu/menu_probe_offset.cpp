@@ -44,6 +44,10 @@ void _goto_manual_move_z(const_float_t);
 // Global storage
 float z_offset_backup, calculated_z_offset, z_offset_ref;
 
+inline void z_clearance_move() {
+  do_z_clearance(Z_POST_CLEARANCE);
+}
+
 void set_offset_and_go_back(const_float_t z) {
   probe.offset.z = z;
   SET_SOFT_ENDSTOP_LOOSE(false);
@@ -59,7 +63,7 @@ void probe_offset_wizard_menu() {
     STATIC_ITEM(MSG_MOVE_NOZZLE_TO_BED, SS_CENTER|SS_INVERT);
 
   STATIC_ITEM_F(F("Z"), SS_CENTER, ftostr42_52(current_position.z));
-  STATIC_ITEM(MSG_ZPROBE_ZOFFSET, SS_FULL, ftostr42_52(calculated_z_offset));
+  STATIC_ITEM(MSG_ZPROBE_ZOFFSET, SS_LEFT, ftostr42_52(calculated_z_offset));
 
   SUBMENU(MSG_MOVE_1MM,  []{ _goto_manual_move_z( 1);    });
   SUBMENU(MSG_MOVE_01MM, []{ _goto_manual_move_z( 0.1f); });
@@ -78,10 +82,10 @@ void probe_offset_wizard_menu() {
     set_offset_and_go_back(z_offset_backup);
     // On cancel the Z position needs correction
     #if HOMING_Z_WITH_PROBE && defined(PROBE_OFFSET_WIZARD_START_Z)
-      set_axis_never_homed(Z_AXIS);
+      set_axis_never_homed(Z_AXIS); // On cancel the Z position needs correction
       queue.inject(F("G28Z"));
-    #else
-      do_z_post_clearance();
+    #else // Otherwise do a Z clearance move like after Homing
+      z_clearance_move();
     #endif
   });
 

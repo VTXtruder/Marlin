@@ -58,7 +58,7 @@ TouchControlType Touch::touch_control_type = NONE;
 void Touch::init() {
   TERN_(TOUCH_SCREEN_CALIBRATION, touch_calibration.calibration_reset());
   reset();
-  io.init();
+  io.Init();
   TERN_(HAS_TOUCH_SLEEP, wakeUp());
   enable();
 }
@@ -76,7 +76,6 @@ void Touch::add_control(TouchControlType type, uint16_t x, uint16_t y, uint16_t 
 }
 
 void Touch::idle() {
-  uint16_t i;
   int16_t _x, _y;
 
   if (!enabled) return;
@@ -121,7 +120,7 @@ void Touch::idle() {
           current_control = nullptr;
       }
       else {
-        for (i = 0; i < controls_count; i++) {
+        for (uint16_t i = 0; i < controls_count; i++) {
           if ((WITHIN(x, controls[i].x, controls[i].x + controls[i].width) && WITHIN(y, controls[i].y, controls[i].y + controls[i].height)) || (TERN(TOUCH_SCREEN_CALIBRATION, controls[i].type == CALIBRATE, false))) {
             touch_control_type = controls[i].type;
             touch(&controls[i]);
@@ -222,25 +221,14 @@ void Touch::touch(touch_control_t *control) {
       ui.clear_lcd();
       MenuItem_int3::action(GET_TEXT_F(MSG_SPEED), &feedrate_percentage, 10, 999);
       break;
-
-    #if HAS_EXTRUDERS
-      case FLOWRATE:
-        ui.clear_lcd();
-        MenuItemBase::itemIndex = control->data;
-        #if EXTRUDERS == 1
-          MenuItem_int3::action(GET_TEXT_F(MSG_FLOW), &planner.flow_percentage[MenuItemBase::itemIndex], 10, 999, []{ planner.refresh_e_factor(MenuItemBase::itemIndex); });
-        #else
-          MenuItem_int3::action(GET_TEXT_F(MSG_FLOW_N), &planner.flow_percentage[MenuItemBase::itemIndex], 10, 999, []{ planner.refresh_e_factor(MenuItemBase::itemIndex); });
-        #endif
-        break;
-    #endif
-
-    case STOP:
-      ui.goto_screen([]{
-        MenuItem_confirm::select_screen(GET_TEXT_F(MSG_BUTTON_STOP),
-          GET_TEXT_F(MSG_BACK), ui.abort_print, ui.goto_previous_screen,
-          GET_TEXT_F(MSG_STOP_PRINT), FSTR_P(nullptr), FPSTR("?"));
-        });
+    case FLOWRATE:
+      ui.clear_lcd();
+      MenuItemBase::itemIndex = control->data;
+      #if EXTRUDERS == 1
+        MenuItem_int3::action(GET_TEXT_F(MSG_FLOW), &planner.flow_percentage[MenuItemBase::itemIndex], 10, 999, []{ planner.refresh_e_factor(MenuItemBase::itemIndex); });
+      #else
+        MenuItem_int3::action(GET_TEXT_F(MSG_FLOW_N), &planner.flow_percentage[MenuItemBase::itemIndex], 10, 999, []{ planner.refresh_e_factor(MenuItemBase::itemIndex); });
+      #endif
       break;
 
     #if ENABLED(AUTO_BED_LEVELING_UBL)
@@ -266,25 +254,28 @@ void Touch::hold(touch_control_t *control, millis_t delay) {
 bool Touch::get_point(int16_t *x, int16_t *y) {
   #if ENABLED(TFT_TOUCH_DEVICE_XPT2046)
     #if ENABLED(TOUCH_SCREEN_CALIBRATION)
-      const bool is_touched = (touch_calibration.calibration.orientation == TOUCH_PORTRAIT ? io.getRawPoint(y, x) : io.getRawPoint(x, y));
+      bool is_touched = (touch_calibration.calibration.orientation == TOUCH_PORTRAIT ? io.getRawPoint(y, x) : io.getRawPoint(x, y));
+
       if (is_touched && touch_calibration.calibration.orientation != TOUCH_ORIENTATION_NONE) {
         *x = int16_t((int32_t(*x) * touch_calibration.calibration.x) >> 16) + touch_calibration.calibration.offset_x;
         *y = int16_t((int32_t(*y) * touch_calibration.calibration.y) >> 16) + touch_calibration.calibration.offset_y;
       }
     #else
-      const bool is_touched = (TOUCH_ORIENTATION == TOUCH_PORTRAIT ? io.getRawPoint(y, x) : io.getRawPoint(x, y));
+      bool is_touched = (TOUCH_ORIENTATION == TOUCH_PORTRAIT ? io.getRawPoint(y, x) : io.getRawPoint(x, y));
       *x = uint16_t((uint32_t(*x) * TOUCH_CALIBRATION_X) >> 16) + TOUCH_OFFSET_X;
       *y = uint16_t((uint32_t(*y) * TOUCH_CALIBRATION_Y) >> 16) + TOUCH_OFFSET_Y;
     #endif
   #elif ENABLED(TFT_TOUCH_DEVICE_GT911)
-    const bool is_touched = (TOUCH_ORIENTATION == TOUCH_PORTRAIT ? io.getPoint(y, x) : io.getPoint(x, y));
+    bool is_touched = (TOUCH_ORIENTATION == TOUCH_PORTRAIT ? io.getPoint(y, x) : io.getPoint(x, y));
   #endif
+
   #if HAS_TOUCH_SLEEP
     if (is_touched)
       wakeUp();
     else if (!isSleeping() && ELAPSED(millis(), next_sleep_ms) && ui.on_status_screen())
       sleepTimeout();
   #endif
+
   return is_touched;
 }
 

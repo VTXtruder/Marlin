@@ -30,7 +30,7 @@
 #include <stdlib.h>    // size_t
 
 //#define DEBUG_DGUSLCD
-//#define DEBUG_DGUS_COMM
+//#define DEBUG_DGUSLCD_COMM
 
 #if HAS_BED_PROBE
   #include "../../../module/probe.h"
@@ -60,13 +60,13 @@ public:
   static void initDisplay();
 
   // Variable access.
-  static void writeVariable(uint16_t adr, const void *values, uint8_t valueslen, bool isstr=false);
-  static void writeVariablePGM(uint16_t adr, const void *values, uint8_t valueslen, bool isstr=false);
-  static void writeVariable(uint16_t adr, int16_t value);
-  static void writeVariable(uint16_t adr, uint16_t value);
-  static void writeVariable(uint16_t adr, uint8_t value);
-  static void writeVariable(uint16_t adr, int8_t value);
-  static void writeVariable(uint16_t adr, long value);
+  static void WriteVariable(uint16_t adr, const void *values, uint8_t valueslen, bool isstr=false);
+  static void WriteVariablePGM(uint16_t adr, const void *values, uint8_t valueslen, bool isstr=false);
+  static void WriteVariable(uint16_t adr, int16_t value);
+  static void WriteVariable(uint16_t adr, uint16_t value);
+  static void WriteVariable(uint16_t adr, uint8_t value);
+  static void WriteVariable(uint16_t adr, int8_t value);
+  static void WriteVariable(uint16_t adr, long value);
 
   // Utility functions for bridging ui_api and dbus
   template<typename T, float(*Getter)(const T), T selector, typename WireType=uint16_t>
@@ -97,7 +97,7 @@ public:
 
   // Checks two things: Can we confirm the presence of the display and has we initialized it.
   // (both boils down that the display answered to our chatting)
-  static bool isInitialized() { return initialized; }
+  static bool isInitialized() { return Initialized; }
 
 private:
   static void writeHeader(uint16_t adr, uint8_t cmd, uint8_t payloadlen);
@@ -109,13 +109,13 @@ private:
   static bool initialized, no_reentrance;
 };
 
-extern DGUSDisplay dgus;
+extern DGUSDisplay dgusdisplay;
 
 // compile-time x^y
 constexpr float cpow(const float x, const int y) { return y == 0 ? 1.0 : x * cpow(x, y - 1); }
 
 ///
-const uint16_t* findScreenVPMapList(uint8_t screen);
+const uint16_t* DGUSLCD_FindScreenVPMapList(uint8_t screen);
 
 /// Find the flash address of a DGUS_VP_Variable for the VP.
 const DGUS_VP_Variable* findVPVar(const uint16_t vp);

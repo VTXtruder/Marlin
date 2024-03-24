@@ -103,23 +103,7 @@
 
 #elif ENABLED(YHCB2004)
 
-  #ifndef YHCB2004_SS_PIN
-    #define YHCB2004_SS_PIN   SS
-  #endif
-  #ifndef YHCB2004_SCK_PIN
-    #define YHCB2004_SCK_PIN  SCK
-  #endif
-  #ifndef YHCB2004_MOSI_PIN
-    #define YHCB2004_MOSI_PIN MOSI
-  #endif
-  #ifndef YHCB2004_MISO_PIN
-    #define YHCB2004_MISO_PIN MISO
-  #endif
-  #if !PINS_EXIST(YHCB2004_SS, YHCB2004_SCK, YHCB2004_MOSI, YHCB2004_MISO)
-    #error "YHCB2004 display requires YHCB2004_SS_PIN, YHCB2004_SCK_PIN, YHCB2004_MOSI_PIN, and YHCB2004_MISO_PIN."
-  #endif
-
-  LCD_CLASS lcd(YHCB2004_SS_PIN, 20, 4, YHCB2004_SCK_PIN, YHCB2004_MOSI_PIN, YHCB2004_MISO_PIN); // SS, cols, rows, SCK, MOSI, MISO
+  LCD_CLASS lcd(YHCB2004_SCK_PIN, 20, 4, YHCB2004_MOSI_PIN, YHCB2004_MISO_PIN); // CLK, cols, rows, MOSI, MISO
 
 #else
 
@@ -1165,42 +1149,24 @@ void MarlinUI::draw_status_screen() {
   #endif // ADVANCED_PAUSE_FEATURE
 
   // Draw a static item with no left-right margin required. Centered by default.
-  void MenuItem_static::draw(const uint8_t row, FSTR_P const fstr, const uint8_t style/*=SS_DEFAULT*/, const char *vstr/*=nullptr*/) {
-    lcd_moveto(0, row);
-
+  void MenuItem_static::draw(const uint8_t row, FSTR_P const fstr, const uint8_t style/*=SS_DEFAULT*/, const char * const vstr/*=nullptr*/) {
     int8_t n = LCD_WIDTH;
-    const bool center = bool(style & SS_CENTER), full = bool(style & SS_FULL);
+    lcd_moveto(0, row);
     const int8_t plen = fstr ? utf8_strlen(fstr) : 0,
                  vlen = vstr ? utf8_strlen(vstr) : 0;
-    int8_t pad = (center || full) ? n - plen - vlen : 0;
-
-    // SS_CENTER: Pad with half of the unused space first
-    if (center) for (int8_t lpad = pad / 2; lpad > 0; --lpad) { lcd_put_u8str(F(" ")); n--; }
-
-    // Draw as much of the label as fits
-    if (plen) n -= lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n - vlen);
-
-    if (vlen && n > 0) {
-      // SS_FULL: Pad with enough space to justify the value
-      if (full && !center) {
-        // Move the leading colon from the value to the label
-        if (*vstr == ':') { n -= lcd_put_u8str(F(":")); vstr++; }
-        // Move spaces to the padding
-        while (*vstr == ' ') { vstr++; pad++; }
-        // Pad in-between
-        for (; pad > 0; --pad) { lcd_put_u8str(F(" ")); n--; }
-      }
-      n -= lcd_put_u8str_max(vstr, n);
+    if (style & SS_CENTER) {
+      int8_t pad = (LCD_WIDTH - plen - vlen) / 2;
+      while (--pad >= 0) { lcd_put_u8str(F(" ")); n--; }
     }
-
+    if (plen) n = lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n);
+    if (vlen) n -= lcd_put_u8str_max(vstr, n);
     for (; n > 0; --n) lcd_put_u8str(F(" "));
   }
 
   // Draw a generic menu item with pre_char (if selected) and post_char
   void MenuItemBase::_draw(const bool sel, const uint8_t row, FSTR_P const ftpl, const char pre_char, const char post_char) {
     lcd_put_lchar(0, row, sel ? pre_char : ' ');
-    uint8_t n = LCD_WIDTH - 2;
-    n -= lcd_put_u8str(ftpl, itemIndex, itemStringC, itemStringF, n);
+    uint8_t n = lcd_put_u8str(ftpl, itemIndex, itemStringC, itemStringF, LCD_WIDTH - 2);
     for (; n; --n) lcd_put_u8str(F(" "));
     lcd_put_lchar(post_char);
   }
@@ -1209,8 +1175,7 @@ void MarlinUI::draw_status_screen() {
   void MenuEditItemBase::draw(const bool sel, const uint8_t row, FSTR_P const ftpl, const char * const inStr, const bool pgm) {
     const uint8_t vlen = inStr ? (pgm ? utf8_strlen_P(inStr) : utf8_strlen(inStr)) : 0;
     lcd_put_lchar(0, row, sel ? LCD_STR_ARROW_RIGHT[0] : ' ');
-    uint8_t n = LCD_WIDTH - 2 - vlen;
-    n -= lcd_put_u8str(ftpl, itemIndex, itemStringC, itemStringF, n);
+    uint8_t n = lcd_put_u8str(ftpl, itemIndex, itemStringC, itemStringF, LCD_WIDTH - 2 - vlen);
     if (vlen) {
       lcd_put_u8str(F(":"));
       for (; n; --n) lcd_put_u8str(F(" "));
@@ -1221,8 +1186,7 @@ void MarlinUI::draw_status_screen() {
   // Low-level draw_edit_screen can be used to draw an edit screen from anyplace
   void MenuEditItemBase::draw_edit_screen(FSTR_P const ftpl, const char * const value/*=nullptr*/) {
     ui.encoder_direction_normal();
-    uint8_t n = LCD_WIDTH - 1;
-    n -= lcd_put_u8str(0, 1, ftpl, itemIndex, itemStringC, itemStringF, n);
+    uint8_t n = lcd_put_u8str(0, 1, ftpl, itemIndex, itemStringC, itemStringF, LCD_WIDTH - 1);
     if (value) {
       lcd_put_u8str(F(":")); n--;
       const uint8_t len = utf8_strlen(value) + 1;   // Plus one for a leading space
@@ -1249,8 +1213,8 @@ void MarlinUI::draw_status_screen() {
 
     void MenuItem_sdbase::draw(const bool sel, const uint8_t row, FSTR_P const, CardReader &theCard, const bool isDir) {
       lcd_put_lchar(0, row, sel ? LCD_STR_ARROW_RIGHT[0] : ' ');
-      uint8_t n = LCD_WIDTH - 2;
-      n -= lcd_put_u8str_max(ui.scrolled_filename(theCard, n, row, sel), n);
+      constexpr uint8_t maxlen = LCD_WIDTH - 2;
+      uint8_t n = maxlen - lcd_put_u8str_max(ui.scrolled_filename(theCard, maxlen, row, sel), maxlen);
       for (; n; --n) lcd_put_u8str(F(" "));
       lcd_put_lchar(isDir ? LCD_STR_FOLDER[0] : ' ');
     }

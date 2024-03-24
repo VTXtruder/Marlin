@@ -38,7 +38,7 @@ TFT SPI_TFT;
 
 // use SPI1 for the spi tft.
 void TFT::spiInit(uint8_t spiRate) {
-  tftio.init();
+  tftio.Init();
 }
 
 void TFT::setPoint(uint16_t x, uint16_t y, uint16_t point) {
@@ -53,7 +53,7 @@ void TFT::setWindow(uint16_t x, uint16_t y, uint16_t with, uint16_t height) {
 }
 
 void TFT::lcdInit() {
-  tftio.initTFT();
+  tftio.InitTFT();
   #if PIN_EXISTS(TFT_BACKLIGHT)
     OUT_WRITE(TFT_BACKLIGHT_PIN, LOW);
   #endif
@@ -63,14 +63,12 @@ void TFT::lcdInit() {
   #if PIN_EXISTS(TFT_BACKLIGHT)
     OUT_WRITE(TFT_BACKLIGHT_PIN, HIGH);
   #endif
-  #if HAS_LOGO_IN_FLASH
-    delay(2000);
-  #endif
+  TERN_(HAS_LOGO_IN_FLASH, delay(2000));
 }
 
 void TFT::lcdClear(uint16_t color) {
   setWindow(0, 0, TFT_WIDTH, TFT_HEIGHT);
-  tftio.writeMultiple(color, uint32_t(TFT_WIDTH) * uint32_t(TFT_HEIGHT));
+  tftio.WriteMultiple(color, uint32_t(TFT_WIDTH) * uint32_t(TFT_HEIGHT));
 }
 
 void TFT::lcdDrawLogo() {
@@ -78,7 +76,7 @@ void TFT::lcdDrawLogo() {
     setWindow(0, 0, TFT_WIDTH, TFT_HEIGHT);
     for (uint16_t i = 0; i < (TFT_HEIGHT); i++) {
       picLogoRead((uint8_t *)"", (uint8_t *)bmp_public_buf, (TFT_WIDTH) * 2);
-      tftio.writeSequence((uint16_t *)bmp_public_buf, TFT_WIDTH);
+      tftio.WriteSequence((uint16_t *)bmp_public_buf, TFT_WIDTH);
     }
   #endif
 }

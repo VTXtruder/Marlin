@@ -54,6 +54,34 @@
   #define BTN2_POS BTN_POS( 7,8), BTN_SIZE(5,1)
 #endif
 
+#if ENABLED(TOUCH_UI_PORTRAIT)
+  #define GRID_COLS  6
+  #define GRID_ROWS 15
+  #define FILES_PER_PAGE 11
+  #define PREV_DIR LEFT
+  #define NEXT_DIR RIGHT
+
+  #define PREV_POS BTN_POS(1,1),  BTN_SIZE(1,2)
+  #define HEAD_POS BTN_POS(2,1),  BTN_SIZE(4,2)
+  #define NEXT_POS BTN_POS(6,1),  BTN_SIZE(1,2)
+  #define LIST_POS BTN_POS(1,3),  BTN_SIZE(6,FILES_PER_PAGE)
+  #define BTN1_POS BTN_POS(1,14), BTN_SIZE(3,2)
+  #define BTN2_POS BTN_POS(4,14), BTN_SIZE(3,2)
+#else
+  #define GRID_COLS 12
+  #define GRID_ROWS  8
+  #define FILES_PER_PAGE 6
+  #define PREV_DIR UP
+  #define NEXT_DIR DOWN
+
+  #define PREV_POS BTN_POS(12,2), BTN_SIZE(1,3)
+  #define HEAD_POS BTN_POS( 1,1), BTN_SIZE(12,1)
+  #define NEXT_POS BTN_POS(12,5), BTN_SIZE(1,4)
+  #define LIST_POS BTN_POS( 1,2), BTN_SIZE(11,FILES_PER_PAGE)
+  #define BTN1_POS BTN_POS( 1,8), BTN_SIZE(6,1)
+  #define BTN2_POS BTN_POS( 7,8), BTN_SIZE(5,1)
+#endif
+
 using namespace FTDI;
 using namespace ExtUI;
 using namespace Theme;
@@ -171,13 +199,10 @@ void FilesScreen::drawFooter() {
   cmd.colors(normal_btn)
      .font(font_medium)
      .colors(normal_btn)
-     .enabled(!mydata.flags.is_root)
-     .tag(245).button(BTN2_POS, F("Up Dir"))
+     .tag(mydata.flags.is_root ? 240 : 245).button(BTN2_POS, F("Back"))
      .colors(action_btn);
 
-  if (mydata.flags.is_empty)
-    cmd.tag(240).button(BTN1_POS, GET_TEXT_F(MSG_BUTTON_DONE));
-  else if (has_selection && mydata.flags.is_dir)
+  if (has_selection && mydata.flags.is_dir)
     cmd.tag(244).button(BTN1_POS, GET_TEXT_F(MSG_BUTTON_OPEN));
   else
     cmd.tag(241).enabled(has_selection).button(BTN1_POS, F("Select"));
@@ -214,12 +239,9 @@ void FilesScreen::gotoPage(uint8_t page) {
 
 bool FilesScreen::onTouchEnd(uint8_t tag) {
   switch (tag) {
-    case 240: // Done button, always select first file
-      {
-          FileList files;
-          files.seek(0);
-          GOTO_PREVIOUS();
-      }
+    case 240: // Back button
+      card.filename[0] = card.longFilename[0] = '\0'; // Clear file selection
+      GOTO_PREVIOUS();
       return true;
     case 241: // Select highlighted file
       GOTO_PREVIOUS();

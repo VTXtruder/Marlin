@@ -461,7 +461,7 @@ public:
      */
     enum MarlinBusyState : char {
       NOT_BUSY,           // Not in a handler
-      IN_HANDLER,         // Processing a GCode
+      IN_HANDLER,         // Processing a G-Code
       IN_PROCESS,         // Known to be blocking command input (as in G29)
       PAUSED_FOR_USER,    // Blocking pending any input
       PAUSED_FOR_INPUT    // Blocking pending text input (concept)
@@ -483,9 +483,6 @@ public:
 private:
 
   friend class MarlinSettings;
-  #if ENABLED(ARC_SUPPORT)
-    friend void plan_arc(const xyze_pos_t&, const ab_float_t&, const bool, const uint8_t);
-  #endif
 
   #if ENABLED(MARLIN_DEV_MODE)
     static void D(const int16_t dcode);
@@ -727,6 +724,7 @@ private:
 
   #if ENABLED(BD_SENSOR)
     static void M102();
+    static void M102_report(const bool forReplay=true);
   #endif
 
   #if HAS_HOTEND
@@ -860,7 +858,7 @@ private:
   static void M205();
   static void M205_report(const bool forReplay=true);
 
-  #if HAS_HOME_OFFSET
+  #if HAS_M206_COMMAND
     static void M206();
     static void M206_report(const bool forReplay=true);
   #endif
@@ -1043,7 +1041,7 @@ private:
     static void M425_report(const bool forReplay=true);
   #endif
 
-  #if HAS_HOME_OFFSET
+  #if HAS_M206_COMMAND
     static void M428();
   #endif
 
@@ -1229,7 +1227,7 @@ private:
     static void M995();
   #endif
 
-  #if SPI_FLASH_BACKUP
+  #if ALL(SPI_FLASH, HAS_MEDIA)
     static void M993();
     static void M994();
   #endif

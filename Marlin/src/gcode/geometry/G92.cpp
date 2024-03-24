@@ -63,7 +63,10 @@ void GcodeSuite::G92() {
 
     #if ENABLED(CNC_COORDINATE_SYSTEMS) && !IS_SCARA
       case 1:                                                         // G92.1 - Zero the Workspace Offset
-        workspace_offset.reset();
+        LOOP_NUM_AXES(i) if (position_shift[i]) {
+          position_shift[i] = 0;
+          update_workspace_offset((AxisEnum)i);
+        }
         break;
     #endif
 
@@ -89,9 +92,10 @@ void GcodeSuite::G92() {
                       v = TERN0(HAS_EXTRUDERS, i == E_AXIS) ? l : LOGICAL_TO_NATIVE(l, i),  // Axis position in NATIVE space (applying the existing offset)
                       d = v - current_position[i];                // How much is the current axis position altered by?
           if (!NEAR_ZERO(d)) {
-            #if HAS_WORKSPACE_OFFSET && NONE(IS_SCARA, POLARGRAPH)  // When using workspaces...
+            #if HAS_POSITION_SHIFT && NONE(IS_SCARA, POLARGRAPH)  // When using workspaces...
               if (TERN1(HAS_EXTRUDERS, i != E_AXIS)) {
-                workspace_offset[i] += d;                         // ...most axes offset the workspace...
+                position_shift[i] += d;                           // ...most axes offset the workspace...
+                update_workspace_offset((AxisEnum)i);
               }
               else {
                 #if HAS_EXTRUDERS

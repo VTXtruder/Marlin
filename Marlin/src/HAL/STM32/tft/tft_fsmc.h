@@ -62,16 +62,16 @@ class TFT_FSMC {
 
     static LCD_CONTROLLER_TypeDef *LCD;
 
-    static uint32_t readID(const tft_data_t reg);
-    static void transmit(tft_data_t data) { LCD->RAM = data; __DSB(); }
-    static void transmit(uint32_t memoryIncrease, uint16_t *data, uint16_t count);
-    static void transmitDMA(uint32_t memoryIncrease, uint16_t *data, uint16_t count);
+    static uint32_t ReadID(tft_data_t Reg);
+    static void Transmit(tft_data_t Data) { LCD->RAM = Data; __DSB(); }
+    static void Transmit(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count);
+    static void TransmitDMA(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count);
 
   public:
     static void init();
     static uint32_t getID();
     static bool isBusy();
-    static void abort();
+    static void Abort();
 
     static void dataTransferBegin(uint16_t dataWidth=TFT_DATASIZE) {}
     static void dataTransferEnd() {}
@@ -79,14 +79,14 @@ class TFT_FSMC {
     static void writeData(uint16_t data) { transmit(tft_data_t(data)); }
     static void writeReg(const uint16_t inReg) { LCD->REG = tft_data_t(inReg); __DSB(); }
 
-    static void writeSequence_DMA(uint16_t *data, uint16_t count) { transmitDMA(DMA_PINC_ENABLE, data, count); }
-    static void writeMultiple_DMA(uint16_t color, uint16_t count) { static uint16_t data; data = color; transmitDMA(DMA_PINC_DISABLE, &data, count); }
+    static void WriteSequence_DMA(uint16_t *Data, uint16_t Count) { TransmitDMA(DMA_PINC_ENABLE, Data, Count); }
+    static void WriteMultiple_DMA(uint16_t Color, uint16_t Count) { static uint16_t Data; Data = Color; TransmitDMA(DMA_PINC_DISABLE, &Data, Count); }
 
-    static void writeSequence(uint16_t *data, uint16_t count) { transmit(DMA_PINC_ENABLE, data, count); }
-    static void writeMultiple(uint16_t color, uint32_t count) {
-      while (count > 0) {
-        transmit(DMA_MINC_DISABLE, &color, count > DMA_MAX_WORDS ? DMA_MAX_WORDS : count);
-        count = count > DMA_MAX_WORDS ? count - DMA_MAX_WORDS : 0;
+    static void WriteSequence(uint16_t *Data, uint16_t Count) { Transmit(DMA_PINC_ENABLE, Data, Count); }
+    static void WriteMultiple(uint16_t Color, uint32_t Count) {
+      while (Count > 0) {
+        Transmit(DMA_MINC_DISABLE, &Color, Count > DMA_MAX_WORDS ? DMA_MAX_WORDS : Count);
+        Count = Count > DMA_MAX_WORDS ? Count - DMA_MAX_WORDS : 0;
       }
     }
 };

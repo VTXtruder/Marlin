@@ -44,6 +44,8 @@
 
   extern ExtUI::FileList filelist;
 
+  extern ExtUI::FileList filelist;
+
   void DGUSScreenHandler::sdFileSelected(DGUS_VP_Variable &var, void *val_ptr) {
     uint16_t touched_nr = (int16_t)swap16(*(uint16_t*)val_ptr) + top_file;
     if (touched_nr > filelist.count()) return;
@@ -85,7 +87,7 @@
 
       case 1: // Pause
 
-        gotoScreen(DGUS_SCREEN_SDPRINTMANIPULATION);
+        GotoScreen(DGUSLCD_SCREEN_SDPRINTMANIPULATION);
         if (!ExtUI::isPrintingFromMediaPaused()) {
           ExtUI::pausePrint();
           //ExtUI::mks_pausePrint();
@@ -134,7 +136,9 @@ void DGUSScreenHandler::screenChangeHook(DGUS_VP_Variable &var, void *val_ptr) {
   // meaning "return to previous screen"
   DGUS_ScreenID target = (DGUS_ScreenID)tmp[1];
 
-  if (target == DGUS_SCREEN_POPUP) {
+  DEBUG_ECHOLNPGM("\n DEBUG target", target);
+
+  if (target == DGUSLCD_SCREEN_POPUP) {
     // Special handling for popup is to return to previous menu
     if (current_screenID == DGUS_SCREEN_POPUP && confirm_action_cb) confirm_action_cb();
     popToOldScreen();
@@ -144,7 +148,7 @@ void DGUSScreenHandler::screenChangeHook(DGUS_VP_Variable &var, void *val_ptr) {
   updateNewScreen(target);
 
   #ifdef DEBUG_DGUSLCD
-    if (!findScreenVPMapList(target)) DEBUG_ECHOLNPGM("WARNING: No screen Mapping found for ", target);
+    if (!DGUSLCD_FindScreenVPMapList(target)) DEBUG_ECHOLNPGM("WARNING: No screen Mapping found for ", target);
   #endif
 }
 
@@ -157,7 +161,7 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
     }
   #endif
   char axiscode;
-  uint16_t speed = manual_feedrate_mm_m.x; // Default feedrate for manual moves
+  unsigned int speed = 1500; // FIXME: get default feedrate for manual moves, don't hardcode.
 
   switch (var.VP) {
     default: return;
@@ -193,16 +197,23 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
 
   if (!movevalue) {
     // homing
+    DEBUG_ECHOPGM(" homing ", C(axiscode));
     char buf[6] = "G28 X";
     buf[4] = axiscode;
+    //DEBUG_ECHOPGM(" ", buf);
     queue.enqueue_one_now(buf);
     forceCompleteUpdate();
     return;
   }
   else {
     // movement
-    const bool old_relative_mode = relative_mode;
-    if (!relative_mode) queue.enqueue_now(F("G91"));
+    DEBUG_ECHOPGM(" move ", C(axiscode));
+    bool old_relative_mode = relative_mode;
+    if (!relative_mode) {
+      //DEBUG_ECHOPGM(" G91");
+      queue.enqueue_now(F("G91"));
+      //DEBUG_ECHOPGM(" ✓ ");
+    }
     char buf[32]; // G1 X9999.99 F12345
     const uint16_t backup_speed = MMS_TO_MMM(feedrate_mm_s);
     char sign[] = "\0";
@@ -210,10 +221,19 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
     if (movevalue < 0) { value = -value; sign[0] = '-'; }
     int16_t fraction = ABS(movevalue) % 100;
     snprintf_P(buf, 32, PSTR("G0 %c%s%d.%02d F%d"), axiscode, sign, value, fraction, speed);
+    //DEBUG_ECHOPGM(" ", buf);
     queue.enqueue_one_now(buf);
     if (backup_speed != speed) {
       snprintf_P(buf, 32, PSTR("G0 F%d"), backup_speed);
       queue.enqueue_one_now(buf);
+      //DEBUG_ECHOPGM(" ", buf);
+    }
+    // while (!enqueue_and_echo_command(buf)) idle();
+    //DEBUG_ECHOLNPGM(" ✓ ");
+    if (!old_relative_mode) {
+      //DEBUG_ECHOPGM("G90");
+      queue.enqueue_now(F("G90"));
+      //DEBUG_ECHOPGM(" ✓ ");
     }
     //while (!enqueue_and_echo_command(buf)) idle();
     if (!old_relative_mode) queue.enqueue_now(F("G90"));
@@ -222,13 +242,16 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
   forceCompleteUpdate();
 
   cannotmove:
+    DEBUG_ECHOLNPGM(" cannot move ", C(axiscode));
     return;
 }
 
 #if HAS_PID_HEATING
   void DGUSScreenHandler::handleTemperaturePIDChanged(DGUS_VP_Variable &var, void *val_ptr) {
     uint16_t rawvalue = swap16(*(uint16_t*)val_ptr);
+    DEBUG_ECHOLNPGM("V1:", rawvalue);
     float value = (float)rawvalue / 10;
+    DEBUG_ECHOLNPGM("V2:", value);
     float newvalue = 0;
 
     switch (var.VP) {
@@ -250,6 +273,7 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
         #endif
     }
 
+    DEBUG_ECHOLNPGM("V3:", newvalue);
     *(float *)var.memadr = newvalue;
 
     skipVP = var.VP; // don't overwrite value the next update time as the display might autoincrement in parallel
@@ -315,7 +339,7 @@ void DGUSScreenHandler::handleManualMove(DGUS_VP_Variable &var, void *val_ptr) {
           thermalManager.setTargetHotend(e_temp, ExtUI::extruder_t::E1);
         #endif
       #endif
-      gotoScreen(DGUS_SCREEN_UTILITY);
+      GotoScreen(DGUSLCD_SCREEN_UTILITY);
     }
     else { // Go to the preheat screen to show the heating progress
       switch (var.VP) {
@@ -390,11 +414,11 @@ bool DGUSScreenHandler::loop() {
 
     if (!booted && ELAPSED(ms, BOOTSCREEN_TIMEOUT)) {
       booted = true;
-      gotoScreen(TERN0(POWER_LOSS_RECOVERY, recovery.valid()) ? DGUS_SCREEN_POWER_LOSS : DGUS_SCREEN_MAIN);
+      GotoScreen(TERN0(POWER_LOSS_RECOVERY, recovery.valid()) ? DGUSLCD_SCREEN_POWER_LOSS : DGUSLCD_SCREEN_MAIN);
     }
   #endif
 
-  return isScreenComplete();
+  return IsScreenComplete();
 }
 
 #endif // DGUS_LCD_UI_ORIGIN

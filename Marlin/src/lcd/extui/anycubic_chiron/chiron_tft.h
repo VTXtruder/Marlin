@@ -57,18 +57,18 @@ class ChironTFT {
   static float            live_Zoffset;
   static file_menu_t      file_menu;
   public:
-    static void startup();
-    static void idleLoop();
-    static void printerKilled(FSTR_P, FSTR_P);
-    static void mediaEvent(media_event_t);
-    static void timerEvent(timer_event_t);
-    static void filamentRunout();
-    static void confirmationRequest(const char * const);
-    static void statusChange(const char * const);
-    static void powerLossRecovery();
-    static void printComplete();
-    static void tftSend(FSTR_P const=nullptr);
-    static void tftSendLn(FSTR_P const=nullptr);
+    static void Startup();
+    static void IdleLoop();
+    static void PrinterKilled(FSTR_P, FSTR_P);
+    static void MediaEvent(media_event_t);
+    static void TimerEvent(timer_event_t);
+    static void FilamentRunout();
+    static void ConfirmationRequest(const char * const);
+    static void StatusChange(const char * const);
+    static void PowerLossRecovery();
+    static void PrintComplete();
+    static void SendtoTFT(FSTR_P const=nullptr);
+    static void SendtoTFTLN(FSTR_P const=nullptr);
   private:
     static void detectPanelType();
     static bool readTFTCommand();

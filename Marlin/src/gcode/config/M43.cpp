@@ -140,10 +140,18 @@ inline void servo_probe_test() {
 
     #if ENABLED(Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN)
       #define PROBE_TEST_PIN Z_MIN_PIN
-      #define _PROBE_PREF "Z_MIN"
+      constexpr bool probe_inverting = Z_MIN_ENDSTOP_INVERTING;
+
+      SERIAL_ECHOLNPGM(". Probe Z_MIN_PIN: ", PROBE_TEST_PIN);
+      SERIAL_ECHOPGM(". Z_MIN_ENDSTOP_INVERTING: ");
+
     #else
       #define PROBE_TEST_PIN Z_MIN_PROBE_PIN
-      #define _PROBE_PREF "Z_MIN_PROBE"
+      constexpr bool probe_inverting = Z_MIN_PROBE_ENDSTOP_INVERTING;
+
+      SERIAL_ECHOLNPGM(". Probe Z_MIN_PROBE_PIN: ", PROBE_TEST_PIN);
+      SERIAL_ECHOPGM(   ". Z_MIN_PROBE_ENDSTOP_INVERTING: ");
+
     #endif
 
     SERIAL_ECHOLNPGM(". Probe " _PROBE_PREF "_PIN: ", PROBE_TEST_PIN);
@@ -292,7 +300,9 @@ void GcodeSuite::M43() {
   // 'E' Enable or disable endstop monitoring and return
   if (parser.seen('E')) {
     endstops.monitor_flag = parser.value_bool();
-    SERIAL_ECHOLN(F("endstop monitor "), endstops.monitor_flag ? F("en") : F("dis"), F("abled"));
+    SERIAL_ECHOPGM("endstop monitor ");
+    SERIAL_ECHOF(endstops.monitor_flag ? F("en") : F("dis"));
+    SERIAL_ECHOLNPGM("abled");
     return;
   }
 

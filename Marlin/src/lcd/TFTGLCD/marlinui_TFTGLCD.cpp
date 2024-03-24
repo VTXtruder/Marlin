@@ -419,7 +419,7 @@ void MarlinUI::draw_kill_screen() {
   if (!PanelDetected) return;
   lcd.clear_buffer();
   lcd_moveto(0, 3); lcd.write(COLOR_ERROR);
-  lcd_moveto((LCD_WIDTH - status_message.glyphs()) / 2 + 1, 3);
+  lcd_moveto((LCD_WIDTH - utf8_strlen(status_message)) / 2 + 1, 3);
   lcd_put_u8str(status_message);
   center_text(GET_TEXT_F(MSG_HALTED), 5);
   center_text(GET_TEXT_F(MSG_PLEASE_RESET), 6);
@@ -821,17 +821,11 @@ void MarlinUI::draw_status_screen() {
   // Line 1 - XYZ coordinates
   //
 
-  #if NUM_AXES
-    lcd_moveto(0, 0);
-    const xyz_pos_t lpos = current_position.asLogical();
-    _draw_axis_value(X_AXIS, ftostr4sign(lpos.x), blink);
-    #if HAS_Y_AXIS
-      lcd.write(' '); _draw_axis_value(Y_AXIS, ftostr4sign(lpos.y), blink);
-    #endif
-    #if HAS_Z_AXIS
-      lcd.write(' '); _draw_axis_value(Z_AXIS, ftostr52sp(lpos.z), blink);
-    #endif
-  #endif
+  lcd_moveto(0, 0);
+  const xyz_pos_t lpos = current_position.asLogical();
+  _draw_axis_value(X_AXIS, ftostr4sign(lpos.x), blink); lcd.write(' ');
+  _draw_axis_value(Y_AXIS, ftostr4sign(lpos.y), blink); lcd.write(' ');
+  _draw_axis_value(Z_AXIS, ftostr52sp(lpos.z), blink);
 
   #if HAS_LEVELING && !HAS_HEATED_BED
     lcd.write(planner.leveling_active || blink ? '_' : ' ');
@@ -867,7 +861,7 @@ void MarlinUI::draw_status_screen() {
   //
 
   #if HOTENDS <= 1 || (HOTENDS <= 2 && !HAS_HEATED_BED)
-    #if HAS_DUAL_MIXING
+    #if DUAL_MIXING_EXTRUDER
       lcd_moveto(0, 4);
       // Two-component mix / gradient instead of XY
       char mixer_messages[15];
@@ -969,37 +963,19 @@ void MarlinUI::draw_status_screen() {
   #endif
 
   // Draw a static item with no left-right margin required. Centered by default.
-  void MenuItem_static::draw(const uint8_t row, FSTR_P const fstr, const uint8_t style/*=SS_DEFAULT*/, const char *vstr/*=nullptr*/) {
+  void MenuItem_static::draw(const uint8_t row, FSTR_P const fstr, const uint8_t style/*=SS_DEFAULT*/, const char * const valstr/*=nullptr*/) {
     if (!PanelDetected) return;
     lcd_moveto(0, row);
 
     uint8_t n = LCD_WIDTH;
-    const bool center = bool(style & SS_CENTER), full = bool(style & SS_FULL);
-    const int8_t plen = fstr ? utf8_strlen(fstr) : 0,
-                 vlen = vstr ? utf8_strlen(vstr) : 0;
-    int8_t pad = (center || full) ? n - plen - vlen : 0;
-
-    // SS_CENTER: Pad with half of the unused space first
-    if (center) for (int8_t lpad = pad / 2; lpad > 0; --lpad) { lcd.write(' '); n--; }
-
-    // Draw as much of the label as fits
-    if (plen) n -= lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n - vlen);
-
-    if (vlen && n > 0) {
-      // SS_FULL: Pad with enough space to justify the value
-      if (full && !center) {
-        // Move the leading colon from the value to the label
-        if (*vstr == ':') { lcd.write(':'); vstr++; n--; }
-        // Move spaces to the padding
-        while (*vstr == ' ') { vstr++; pad++; }
-        // Pad in-between
-        for (; pad > 0; --pad) { lcd.write(' '); n--; }
-      }
-      n -= lcd_put_u8str_max(vstr, n);
+    lcd_moveto(0, row);
+    if ((style & SS_CENTER) && !valstr) {
+      int8_t pad = (LCD_WIDTH - utf8_strlen(fstr)) / 2;
+      while (--pad >= 0) { lcd.write(' '); n--; }
     }
-
-    for (; n > 0; --n) lcd.write(' ');
-
+    n = lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n);
+    if (valstr) n -= lcd_put_u8str_max(valstr, n);
+    for (; n; --n) lcd.write(' ');
     lcd.print_line();
   }
 
@@ -1008,8 +984,7 @@ void MarlinUI::draw_status_screen() {
     if (!PanelDetected) return;
     lcd_moveto(0, row);
     lcd.write(sel ? pre_char : ' ');
-    uint8_t n = LCD_WIDTH - 2;
-    n -= lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n);
+    uint8_t n = lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, LCD_WIDTH - 2);
     for (; n; --n) lcd.write(' ');
     lcd.write(post_char);
     lcd.print_line();
@@ -1021,8 +996,7 @@ void MarlinUI::draw_status_screen() {
     const uint8_t vlen = inStr ? (pgm ? utf8_strlen_P(inStr) : utf8_strlen(inStr)) : 0;
     lcd_moveto(0, row);
     lcd.write(sel ? LCD_STR_ARROW_RIGHT[0] : ' ');
-    uint8_t n = LCD_WIDTH - 2 - vlen;
-    n -= lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, n);
+    uint8_t n = lcd_put_u8str(fstr, itemIndex, itemStringC, itemStringF, LCD_WIDTH - 2 - vlen);
     if (vlen) {
       lcd.write(':');
       for (; n; --n) lcd.write(' ');

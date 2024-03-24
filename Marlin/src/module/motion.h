@@ -259,9 +259,7 @@ void report_current_position_projected();
 
 #if ENABLED(AUTO_REPORT_POSITION)
   #include "../libs/autoreport.h"
-  struct PositionReport { static void report() {
-    TERN(AUTO_REPORT_REAL_POSITION, report_real_position(), report_current_position_projected());
-  } };
+  struct PositionReport { static void report() { report_current_position_projected(); } };
   extern AutoReporter<PositionReport> position_auto_reporter;
 #endif
 
@@ -406,19 +404,10 @@ void remember_feedrate_scaling_off();
 void restore_feedrate_and_scaling();
 
 #if HAS_Z_AXIS
-  #if ALL(DWIN_LCD_PROUI, INDIVIDUAL_AXIS_HOMING_SUBMENU, MESH_BED_LEVELING)
-    #define Z_POST_CLEARANCE hmiData.zAfterHoming
-  #elif defined(Z_AFTER_HOMING)
-    #define Z_POST_CLEARANCE Z_AFTER_HOMING
-  #else
-    #define Z_POST_CLEARANCE Z_CLEARANCE_FOR_HOMING
-  #endif
-  void do_z_clearance(const_float_t zclear, const bool with_probe=true, const bool lower_allowed=false);
+  void do_z_clearance(const_float_t zclear, const bool lower_allowed=false);
   void do_z_clearance_by(const_float_t zclear);
-  void do_move_after_z_homing();
-  inline void do_z_post_clearance() { do_z_clearance(Z_POST_CLEARANCE); }
 #else
-  inline void do_z_clearance(float, bool=true, bool=false) {}
+  inline void do_z_clearance(float, bool=false) {}
   inline void do_z_clearance_by(float) {}
 #endif
 
@@ -618,7 +607,7 @@ void home_if_needed(const bool keeplev=false);
 
 #endif
 
-#if HAS_HOME_OFFSET
+#if HAS_M206_COMMAND
   void set_home_offset(const AxisEnum axis, const_float_t v);
 #endif
 

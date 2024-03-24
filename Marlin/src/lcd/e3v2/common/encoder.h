@@ -45,29 +45,29 @@ typedef enum {
   ENCODER_DIFF_ENTER = 3   // click
 } EncoderState;
 
-#define ENCODER_WAIT_MS 20
+#define ENCODER_WAIT_MS TERN(DWIN_LCD_PROUI, 10, 20)
 
 // Encoder initialization
 void encoderConfiguration();
 
 // Analyze encoder value and return state
-EncoderState encoderReceiveAnalyze();
+EncoderState Encoder_ReceiveAnalyze();
 
 inline EncoderState get_encoder_state() {
   static millis_t Encoder_ms = 0;
   const millis_t ms = millis();
   if (PENDING(ms, Encoder_ms)) return ENCODER_DIFF_NO;
-  const EncoderState state = encoderReceiveAnalyze();
+  const EncoderState state = Encoder_ReceiveAnalyze();
   if (state != ENCODER_DIFF_NO) Encoder_ms = ms + ENCODER_WAIT_MS;
   return state;
 }
 
 template<typename T>
-inline bool applyEncoder(const EncoderState &encoder_diffState, T &valref) {
+inline bool Apply_Encoder(const EncoderState &encoder_diffState, T &valref) {
   if (encoder_diffState == ENCODER_DIFF_CW)
-    valref += encoderRate.encoderMoveValue;
+    valref += EncoderRate.encoderMoveValue;
   else if (encoder_diffState == ENCODER_DIFF_CCW)
-    valref -= encoderRate.encoderMoveValue;
+    valref -= EncoderRate.encoderMoveValue;
   return encoder_diffState == ENCODER_DIFF_ENTER;
 }
 

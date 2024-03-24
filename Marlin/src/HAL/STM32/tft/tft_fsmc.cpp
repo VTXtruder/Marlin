@@ -37,9 +37,9 @@ LCD_CONTROLLER_TypeDef *TFT_FSMC::LCD;
 
 void TFT_FSMC::init() {
   uint32_t controllerAddress;
-  FSMC_NORSRAM_TimingTypeDef timing, extTiming;
+  FSMC_NORSRAM_TimingTypeDef Timing, ExtTiming;
 
-  uint32_t nsBank = (uint32_t)pinmap_peripheral(digitalPinToPinName(TFT_CS_PIN), pinMap_FSMC_CS);
+  uint32_t NSBank = (uint32_t)pinmap_peripheral(digitalPinToPinName(TFT_CS_PIN), PinMap_FSMC_CS);
 
   // Perform the SRAM1 memory initialization sequence
   SRAMx.Instance = FSMC_NORSRAM_DEVICE;
@@ -161,8 +161,13 @@ bool TFT_FSMC::isBusy() {
   if ((__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TE_FLAG_INDEX(&DMAtx)) == 0) && (__HAL_DMA_GET_FLAG(&DMAtx, __HAL_DMA_GET_TC_FLAG_INDEX(&DMAtx)) == 0)) return true;
 
   __DSB();
-  abort();
+  Abort();
   return false;
+}
+
+void TFT_FSMC::Abort() {
+  HAL_DMA_Abort(&DMAtx);  // Abort DMA transfer if any
+  HAL_DMA_DeInit(&DMAtx); // Deconfigure DMA
 }
 
 void TFT_FSMC::abort() {
@@ -173,16 +178,14 @@ void TFT_FSMC::abort() {
 void TFT_FSMC::transmitDMA(uint32_t memoryIncrease, uint16_t *data, uint16_t count) {
   DMAtx.Init.PeriphInc = memoryIncrease;
   HAL_DMA_Init(&DMAtx);
-  HAL_DMA_Start(&DMAtx, (uint32_t)data, (uint32_t)&(LCD->RAM), count);
-
-  TERN_(TFT_SHARED_IO, while (isBusy()));
+  HAL_DMA_Start(&DMAtx, (uint32_t)Data, (uint32_t)&(LCD->RAM), Count);
 }
 
-void TFT_FSMC::transmit(uint32_t memoryIncrease, uint16_t *data, uint16_t count) {
-  DMAtx.Init.PeriphInc = memoryIncrease;
+void TFT_FSMC::Transmit(uint32_t MemoryIncrease, uint16_t *Data, uint16_t Count) {
+  DMAtx.Init.PeriphInc = MemoryIncrease;
   HAL_DMA_Init(&DMAtx);
-  dataTransferBegin();
-  HAL_DMA_Start(&DMAtx, (uint32_t)data, (uint32_t)&(LCD->RAM), count);
+  DataTransferBegin();
+  HAL_DMA_Start(&DMAtx, (uint32_t)Data, (uint32_t)&(LCD->RAM), Count);
   HAL_DMA_PollForTransfer(&DMAtx, HAL_DMA_FULL_TRANSFER, HAL_MAX_DELAY);
   abort();
 }
